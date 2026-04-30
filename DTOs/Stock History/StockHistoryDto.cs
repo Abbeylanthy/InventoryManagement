@@ -1,0 +1,11 @@
+namespace InventoryManagement.DTOs.Stock_History;
+public class StockHistoryDto
+{
+    public int ProductId { get; set; }
+    public int QuantityChanged { get; set; }
+    public int PreviousQuantity { get; set; }
+    public int NewQuantity { get; set; }
+    public string? ActionType { get; set; }
+    public string? Note { get; set;}
+    public DateTime CreatedAt { get; set; }
+}
