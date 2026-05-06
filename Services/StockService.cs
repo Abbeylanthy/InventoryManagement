@@ -15,7 +15,7 @@ public class StockService : IStockService
     {
         _context = context;
     }
-    public async Task StockIn(StockInDto dto) // This method handles the logic for stocking in products. It updates the product quantity and records the stock change in the history.
+    public async Task StockIn(StockInDto dto) // This method handles the logic for stocking in products. 
     {
         var product = await _context.Products.FindAsync(dto.ProductId); // First, we find the product in the database using the provided ProductId. If it doesn't exist, we throw an exception.
         if (product == null)
@@ -30,15 +30,15 @@ public class StockService : IStockService
             QuantityChanged = dto.Quantity, // The quantity changed is the amount we just added to the stock.
             PreviousQuantity = previousQty, // The previous quantity before the stock in operation.
             NewQuantity = product.Quantity, // The new quantity after the stock in operation.
-            ActionType = "Stock IN", // We specify the action type as "Stock IN" to differentiate it from stock out operations.
-            Note = dto.Note // We also include any notes provided in the DTO for additional context about this stock change.
+            ActionType = "Stock IN", // We specify the action type as "Stock IN" 
+            Note = dto.Note 
         };
         _context.StockHistories.Add(history);
         await _context.SaveChangesAsync();
     }
-    public async Task StockOut(StockOutDto dto) // This method handles the logic for stocking out products. It checks if there's enough stock, updates the product quantity, and records the stock change in the history.
+    public async Task StockOut(StockOutDto dto)
     {
-        var product = await _context.Products.FindAsync(dto.ProductId); // Similar to StockIn, we first find the product in the database. If it doesn't exist, we throw an exception.
+        var product = await _context.Products.FindAsync(dto.ProductId); 
         if (product == null)
         {
             throw new Exception("Product not found");
@@ -47,12 +47,12 @@ public class StockService : IStockService
         {
             throw new Exception("Insufficient stock");
         }
-        var previousQty = product.Quantity; // We store the previous quantity before updating it, so we can record the change in the history.
-        product.Quantity -= dto.Quantity; // We subtract the outgoing quantity from the existing product quantity.
-        var history = new StockHistory // We create a new StockHistory record to log this stock change, similar to StockIn but with "Stock OUT" as the action type.
+        var previousQty = product.Quantity; 
+        product.Quantity -= dto.Quantity; 
+        var history = new StockHistory 
         {
             ProductId = product.Id,
-            QuantityChanged = -dto.Quantity, // The quantity changed is negative for stock out operations.
+            QuantityChanged = -dto.Quantity, 
             PreviousQuantity = previousQty,
             NewQuantity = product.Quantity,
             ActionType = "Stock OUT",

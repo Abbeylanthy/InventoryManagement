@@ -163,3 +163,4 @@ C:\Users\HP\Documents\InventoryManagement\InventoryManagement\obj\Debug\net10.0\
 C:\Users\HP\Documents\InventoryManagement\InventoryManagement\obj\Debug\net10.0\InventoryManagement.pdb
 C:\Users\HP\Documents\InventoryManagement\InventoryManagement\obj\Debug\net10.0\InventoryManagement.genruntimeconfig.cache
 C:\Users\HP\Documents\InventoryManagement\InventoryManagement\obj\Debug\net10.0\ref\InventoryManagement.dll
+C:\Users\HP\Documents\InventoryManagement\InventoryManagement\obj\Debug\net10.0\InventoryManagement.sourcelink.json
