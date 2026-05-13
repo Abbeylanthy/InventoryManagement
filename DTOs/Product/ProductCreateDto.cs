@@ -2,10 +2,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace InventoryManagement.DTOs.Product;
 
-/// <summary>
-/// DTO used when creating a new Product
-/// This is what the user sees and sends in Swagger
-/// </summary>
 public class ProductCreateDto
 {
     [Required]
@@ -30,4 +26,5 @@ public class ProductCreateDto
     [Required]
     public int CategoryId { get; set; }
     public int SupplierId { get; set; }
+    public int Threshold { get; set; }
 }

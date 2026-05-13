@@ -17,46 +17,24 @@ namespace InventoryManagement.Services;
 /// </summary>
 public class ProductService : IProductService
 {
-    // Generic repository instance for product CRUD operations
     private readonly IGenericRepository<Product> _repository;
-
-    // AutoMapper instance for mapping between domain and DTO objects
     private readonly IMapper _mapper;
-
-    // AppDbContext is used for operations where we need Include() for related data
     private readonly AppDbContext _context;
-
-    /// <summary>
-    /// Constructor using Dependency Injection
-    /// We receive the tools we need from Program.cs
-    /// </summary>
     public ProductService(
         IGenericRepository<Product> repository, 
         IMapper mapper,
         AppDbContext context)
     {
-        // Save injected dependencies into private fields
         _repository = repository;
         _mapper = mapper;
         _context = context;
     }
-
-    /// <summary>
-    /// Creates a new product and returns it with its Category loaded
-    /// </summary>
     public async Task<ProductDto> CreateAsync(ProductCreateDto dto)
     {
-        // Convert incoming data (DTO) into Product entity (database model)
         var product = _mapper.Map<Product>(dto);
-
-        // Add the product to the database (in memory)
         await _repository.AddAsync(product);
 
-        // Save changes to SQL Server (this assigns the Id)
         await _repository.SaveChangesAsync();
-
-        // Re-fetch the product WITH its related Category data
-        // .Include() tells EF Core to join the Categories table
         var createdDto = await _context.Products
     .Include(p => p.Category)
     .Where(p => p.Id == product.Id)
@@ -69,17 +47,14 @@ public class ProductService : IProductService
         Quantity = p.Quantity,
         SKU = p.SKU,
         CategoryId = (int)p.CategoryId,
-        // Add other fields from ProductDto if you have them (CreatedAt, UpdatedAt, IsActive, etc.)
         Category = p.Category!.Name,
-            // Description = p.Category.Description,  // if it exists
+            
     })
     .FirstOrDefaultAsync();
 
 return createdDto!;
     }
-    /// Gets all products with support for search, sorting, and pagination
-/// Gets all products with support for search, sorting, and pagination.
-/// Category is included for each product.
+    
 public async Task<IEnumerable<ProductDto>> GetAllAsync(
     string? search = null, 
     string? sort = null, 

@@ -18,7 +18,7 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create([FromBody] CategoryCreateDto dto)
     {
         if (!ModelState.IsValid)
@@ -37,7 +37,7 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [Authorize]
+    [Authorize] 
     public async Task<IActionResult> GetById(int id)
     {
         var category = await _categoryService.GetByIdAsync(id);
@@ -53,6 +53,7 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpPatch("{id}/toggle-active")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> ToggleActive(int id, [FromQuery] bool isActive)
     {
         var success = await _categoryService.ToggleActiveAsync(id, isActive);
@@ -60,7 +61,7 @@ public class CategoriesController : ControllerBase
     }
     
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Update(int id, [FromBody] CategoryUpdateDto dto)
     {
         // If the incoming data doesn't match validation rules, return bad request

@@ -1,230 +1,232 @@
-using Microsoft.AspNetCore.Identity;
-using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using InventoryManagement.DTOs.User;
-using InventoryManagement.Enum;
-using InventoryManagement.Repositories.Interfaces;
+using InventoryManagement.DTOs.Role;
 using InventoryManagement.Entities;
 using InventoryManagement.Data;
-using Microsoft.AspNetCore.Http.HttpResults;
-using InventoryManagement.DTOs;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
-namespace InventoryManagement.Services.Interfaces;
+using InventoryManagement.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
+
+namespace InventoryManagement.Services;
+
 public class UserService : IUserService
 {
-    private readonly IGenericRepository<User> _repository;
-    private readonly IMapper _mapper;
     private readonly AppDbContext _context;
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly IOtpService _otpService;
-    private readonly IHttpContextAccessor _httpContextAccessor;
 
-public UserService (IGenericRepository<User> repository, IMapper mapper, AppDbContext _context, IPasswordHasher<User> passwordHasher, IOtpService otpService, IHttpContextAccessor httpContextAccessor)
+    public UserService(
+        AppDbContext context,
+        IPasswordHasher<User> passwordHasher,
+        IOtpService otpService)
     {
-        _repository = repository;
-        _mapper = mapper;
-        this._context = _context;
-        this._passwordHasher = passwordHasher;
-        this._otpService = otpService;
-        this._httpContextAccessor = httpContextAccessor;
+        _context = context;
+        _passwordHasher = passwordHasher;
+        _otpService = otpService;
     }
+
+    // ---------------- CREATE USER ----------------
     public async Task<UserDto> CreateUserAsync(UserCreateDto dto)
     {
-        // Validation
-        if (string.IsNullOrEmpty(dto.UserName) ||
-         string.IsNullOrEmpty(dto.Email) ||
-          string.IsNullOrEmpty(dto.Password))
+        if (await _context.Users.AnyAsync(u =>
+            u.UserName == dto.UserName || u.Email == dto.Email))
         {
-            throw new ArgumentException("Username, Email and Password are required.");
-        }
-        
-        // Minimum Length
-        if (dto.Password.Length < 8)
-        {
-            throw new InvalidOperationException("Password must be at least 8 characters long");
+            throw new Exception("User already exists");
         }
 
-        // At least 1 UpperCase
-        if (!dto.Password.Any(char.IsUpper))
-        {
-            throw new InvalidOperationException("Password must contain at least 1 Uppercase letter");
-        }
-        
-        // At least 1 special character
-        if (!dto.Password.Any(ch => ! char.IsLetterOrDigit(ch)))
-        {
-            throw new InvalidOperationException("Password must contain at least 1 special character");
-        }
-
-        // Check if user exists
-        if (await _context.Users.AnyAsync(u => u.UserName == dto.UserName))
-        {
-            throw new InvalidOperationException("User with the same username or email already exists.");
-        }
-        // Create new user entity
-        
         var user = new User
         {
+            FirstName = dto.FirstName,
+            LastName = dto.LastName,
             UserName = dto.UserName,
             Email = dto.Email,
-            Role = dto.Role,  
+            DateOfBirth = dto.DateOfBirth,
+            Gender = dto.Gender,
             IsActive = false,
-            EmailVerified = false  
+            EmailVerified = false,
+
+           UserRoles = dto.RoleIds.Select(roleId => new UserRole 
+{
+    RoleId = roleId 
+}).ToList() 
         };
+
         user.PasswordHash = _passwordHasher.HashPassword(user, dto.Password);
+
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
+
         await _otpService.GenerateOtpAsync(user.Email);
+
+        await _context.Entry(user)
+            .Collection(u => u.UserRoles)
+            .Query()
+            .Include(r => r.Role)
+            .LoadAsync();
+
         return new UserDto
         {
             Id = user.Id,
             UserName = user.UserName,
-            Email = user.Email,
-            Role = user.Role
-        };
+            Roles = user.UserRoles
+    .Select(r => new RoleMinDto
+    {
+        Id = r.Role.Id,
+        Name = r.Role.Name
+    })
+    .ToList()
+    };
     }
-    public async Task<UserDto> LoginAsync(UserLoginDto dto)
-{
-    var user = await _context.Users
-        .FirstOrDefaultAsync(u => u.UserName == dto.UserName);
 
-    if (user == null)
-        throw new InvalidOperationException("Invalid username or password.");
-
-        if (!user.EmailVerified)
-        throw new InvalidOperationException("Please verify your email before logging in.");
-
-         //  BLOCK INACTIVE USERS HERE
-    if (!user.IsActive)
-        throw new InvalidOperationException("Account is deactivated");
-
-
-var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash!, dto.Password);
-if (result == PasswordVerificationResult.Failed)
-    throw new InvalidOperationException("Invalid username or password.");
-
-    return _mapper.Map<UserDto>(user);
-}
+    // ---------------- GET ALL ----------------
     public async Task<IEnumerable<UserDto>> GetAllAsync()
     {
-        var users = await _context.Users.ToListAsync();
-        return _mapper.Map<IEnumerable<UserDto>>(users);
+        var users = await _context.Users 
+            .Include(u => u.UserRoles)
+            .ThenInclude(r => r.Role)
+            .ToListAsync();
+
+        return users.Select(u => new UserDto
+        {
+            Id = u.Id,
+            UserName = u.UserName,
+             Roles = u.UserRoles
+    .Select(r => new RoleMinDto
+    {
+        Id = r.Role.Id,
+        Name = r.Role.Name
+    })
+    .ToList()
+        });
     }
+
+    // ---------------- GET BY ID ----------------
+    public async Task<UserDto> GetByIdAsync(int id)
+    {
+        var user = await _context.Users
+            .Include(u => u.UserRoles)
+            .ThenInclude(r => r.Role)
+            .FirstOrDefaultAsync(u => u.Id == id);
+
+        if (user == null) return null!;
+
+        return new UserDto
+        {
+            Id = user.Id,
+            UserName = user.UserName,
+             Roles = user.UserRoles
+    .Select(r => new RoleMinDto
+    {
+        Id = r.Role.Id,
+        Name = r.Role.Name
+    })
+    .ToList()
+        };
+    }
+
+    // ---------------- GET BY ROLE ----------------
+    public async Task<IEnumerable<UserDto>> GetByRoleIdAsync(int roleId)
+    {
+        var users = await _context.Users
+            .Include(u => u.UserRoles)
+            .ThenInclude(r => r.Role)
+            .Where(u => u.UserRoles.Any(r => r.RoleId == roleId))
+            .ToListAsync();
+
+        return users.Select(u => new UserDto
+        {
+            Id = u.Id,
+            UserName = u.UserName,
+             Roles = u.UserRoles
+    .Select(r => new RoleMinDto
+    {
+        Id = r.Role.Id,
+        Name = r.Role.Name
+    })
+    .ToList()
+        });
+    }
+
+    // ---------------- GET BY GENDER ----------------
+    public async Task<IEnumerable<UserDto>> GetByGenderAsync(string gender)
+    {
+        var users = await _context.Users
+            .Include(u => u.UserRoles)
+            .ThenInclude(r => r.Role)
+            .Where(u => u.Gender == gender)
+            .ToListAsync();
+
+        return users.Select(u => new UserDto
+        {
+            Id = u.Id,
+            UserName = u.UserName,
+             Roles = u.UserRoles
+    .Select(r => new RoleMinDto
+    {
+        Id = r.Role.Id,
+        Name = r.Role.Name
+    })
+    .ToList()
+        });
+    }
+
+    // ---------------- UPDATE USER ----------------
+    public async Task<UserDto> UpdateUserAsync(int id, UserUpdateDto dto)
+    {
+        var user = await _context.Users
+            .Include(u => u.UserRoles)
+            .ThenInclude(r => r.Role)
+            .FirstOrDefaultAsync(u => u.Id == id);
+
+        if (user == null)
+            throw new Exception("User not found");
+
+        user.FirstName = dto.FirstName;
+        user.LastName = dto.LastName;
+        user.UserName = dto.UserName;
+        user.Email = dto.Email;
+        user.DateOfBirth = dto.DateOfBirth;
+        user.Gender = dto.Gender;
+
+        await _context.SaveChangesAsync();
+
+        return new UserDto
+        {
+            Id = user.Id,
+            UserName = user.UserName,
+             Roles = user.UserRoles
+    .Select(r => new RoleMinDto
+    {
+        Id = r.Role.Id,
+        Name = r.Role.Name
+    })
+    .ToList()
+        };
+    }
+
+    // ---------------- DELETE ----------------
     public async Task<bool> DeleteUserAsync(int userId)
     {
         var user = await _context.Users.FindAsync(userId);
+
         if (user == null)
-        {
-            return false; // User not found
-        }
+            return false;
+
         _context.Users.Remove(user);
         await _context.SaveChangesAsync();
-        return true; // User deleted successfully
+        return true;
     }
+
+    // ---------------- DEACTIVATE ----------------
     public async Task<bool> DeactivateAccountAsync(int userId)
     {
-        
         var user = await _context.Users.FindAsync(userId);
+
         if (user == null)
-        {
-            return false; // User not found
-        }
-        if (!user.IsActive)
-        {
-            return true; // User already deactivated, consider as success
-        }
+            return false;
+
         user.IsActive = false;
         await _context.SaveChangesAsync();
-        return true; // User deactivated successfully
 
-}
-public async Task ForgetPasswordAsync(string email)
-    {
-        // Check if user exists and is verified
-        var user = await _context.Users
-        .FirstOrDefaultAsync(u => u.Email == email);
-
-    if (user == null)
-        throw new Exception("User not found");
-
-    if (!user.EmailVerified)
-        throw new Exception("Email is not verified");
-
-// Generate OTP and send email
-    await _otpService.GenerateOtpAsync(email);
+        return true;
     }
-    public async Task ResetPasswordAsync(ResetPasswordDto dto)
-{
-    // Verify OTP first
-    var isValidOtp = await _otpService.VerifyOtpAsync(dto.Email, dto.Otp);
-
-    if (!isValidOtp)
-        throw new Exception("Invalid or expired OTP");
-
-    var user = await _context.Users
-        .FirstOrDefaultAsync(u => u.Email == dto.Email);
-
-    if (user == null)
-        throw new Exception("User not found");
-
-    //  Optional: prevent same password reuse
-    var samePassword = _passwordHasher.VerifyHashedPassword(
-        user,
-        user.PasswordHash!,
-        dto.NewPassword
-    );
-
-    if (samePassword != PasswordVerificationResult.Failed)
-        throw new Exception("New password cannot be the same as old password");
-
-    // Hash new password
-    user.PasswordHash = _passwordHasher.HashPassword(user, dto.NewPassword);
-
-    await _context.SaveChangesAsync();
 }
-public async Task ChangePasswordAsync(ChangePasswordDto dto)
-{
-    // Get user ID from JWT claims
-    var userId = _httpContextAccessor.HttpContext!.User
-        .FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-    if (userId == null)
-        throw new Exception("User not found in token");
-
-    var user = await _context.Users
-        .FirstOrDefaultAsync(u => u.Id == int.Parse(userId));
-
-    if (user == null)
-        throw new Exception("User not found");
-
-    // 1. Verify current password
-    var result = _passwordHasher.VerifyHashedPassword(
-        user,
-        user.PasswordHash!,
-        dto.CurrentPassword
-    );
-
-    if (result == PasswordVerificationResult.Failed)
-        throw new Exception("Current password is incorrect");
-
-    // 2. Prevent reuse of same password
-    var samePassword = _passwordHasher.VerifyHashedPassword(
-        user,
-        user.PasswordHash!,
-        dto.NewPassword
-    );
-
-    if (samePassword != PasswordVerificationResult.Failed)
-        throw new Exception("New password cannot be the same as old password");
-
-    // 3. Hash and update password
-    user.PasswordHash = _passwordHasher.HashPassword(user, dto.NewPassword);
-
-    await _context.SaveChangesAsync();
-}
-}
-    
-
-    
-    

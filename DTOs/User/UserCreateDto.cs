@@ -1,19 +1,14 @@
 using System.ComponentModel.DataAnnotations;
-using InventoryManagement.Enum;
 namespace InventoryManagement.DTOs.User;
 public class UserCreateDto
 {
-    [Required]
-    [StringLength(50)]
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
     public string UserName { get; set; } = string.Empty;
-
-    [Required]
-    [StringLength(100, MinimumLength = 6)]
     public string Password { get; set; } = string.Empty;
-
-    [Required]
-    public Role Role { get; set; }
-
-    [EmailAddress]
-    public string? Email { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public DateOnly DateOfBirth { get; set; }
+    public string Gender { get; set; } = string.Empty;
+    public List<int> RoleIds { get; set; } = new();
+    
 }

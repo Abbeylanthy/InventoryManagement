@@ -16,18 +16,21 @@ public class StockController : ControllerBase
     }
 
     [HttpPost("in")]
+    [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> StockIn(StockInDto dto)
     {
         await _stockService.StockIn(dto);
         return Ok("Stock added successfully");
     }
     [HttpPost("out")]
+    [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> StockOut(StockOutDto dto)
     {
         await _stockService.StockOut(dto);
         return Ok("Stock removed successfully");
     }
     [HttpGet("history/{productId}")]
+    [Authorize(Roles = "Admin,Staff")]
 public async Task<IActionResult> GetStockHistory(int productId)
 {
     var history = await _stockService.GetStockHistory(productId);

@@ -12,20 +12,19 @@ public class EmailService : IEmailService
     {
         _settings = settings.Value;
     }
-    public async Task SendEmailAsync(string toEmail, string subject, string body)
+   public async Task SendEmailAsync(string toEmail, string subject, string body)
+{
+    try
     {
-        // Configure SMTP client
         var smtpClient = new SmtpClient(_settings.SmtpServer)
         {
-            //Port = 587, // Common SMTP port for secure email submission
             Port = _settings.Port,
             Credentials = new NetworkCredential(_settings.Username, _settings.Password),
             EnableSsl = true,
         };
-// Create email message
+
         var mail = new MailMessage
         {
-            // Set sender email and name
             From = new MailAddress(_settings.SenderEmail, _settings.SenderName),
             Subject = subject,
             Body = body,
@@ -36,5 +35,11 @@ public class EmailService : IEmailService
 
         await smtpClient.SendMailAsync(mail);
     }
+    catch (Exception ex)
+    {
+        // THIS is what will show the REAL error
+        throw new Exception(ex.ToString());
+    }
+}
 }
     

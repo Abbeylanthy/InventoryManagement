@@ -16,6 +16,7 @@ public class SupplierController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreateSupplier(SupplierCreateDto dto)
     {
         var result = await _supplierService.CreateSupplierAsync(dto);
@@ -23,6 +24,7 @@ public class SupplierController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> GetAllSuppliers()
     {
         var result = await _supplierService.GetAllSuppliersAsync();
@@ -30,6 +32,7 @@ public class SupplierController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> GetSupplierById(int id)
     {
         var result = await _supplierService.GetSupplierByIdAsync(id);
@@ -41,6 +44,7 @@ public class SupplierController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
 public async Task<IActionResult> UpdateSupplier(int id, SupplierCreateDto dto)
 {
     var result = await _supplierService.UpdateSupplierAsync(id, dto);
@@ -48,6 +52,7 @@ public async Task<IActionResult> UpdateSupplier(int id, SupplierCreateDto dto)
 }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteSupplier(int id)
     {
         var result = await _supplierService.DeleteSupplierAsync(id);

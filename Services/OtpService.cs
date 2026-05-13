@@ -1,4 +1,5 @@
 using InventoryManagement.Data;
+using Microsoft.EntityFrameworkCore;
 using InventoryManagement.Entities;
 using InventoryManagement.Services.Interfaces;
 
@@ -37,27 +38,26 @@ public class OtpService : IOtpService
         return otp; 
     }
 
-    public async Task<bool> VerifyOtpAsync(string email, string otp)
-    {
-        // Check if OTP exists and is valid
-        var record = _context.EmailVerificationOtps.FirstOrDefault(r => r.Email == email && r.OtpCode == otp);
-        if (record == null)
-        return false;
-        if (record.IsUsed)
-        return false;
-        if (record.ExpiryTime < DateTime.UtcNow)
-        return false;
-// Mark OTP as used and activate user
-        var user = _context.Users.FirstOrDefault(r => r.Email == email);
-        if (user == null)
-        return false;
-        user.IsActive = true;
-        user.EmailVerified = true;
-        record.IsUsed = true;
-        await _context.SaveChangesAsync();
-        return true;
-    }
+  public async Task<bool> VerifyOtpAsync(string email, string otp)
+{
+    var record = _context.EmailVerificationOtps
+        .FirstOrDefault(r => r.Email == email && r.OtpCode == otp);
 
+    if (record == null || record.IsUsed || record.ExpiryTime < DateTime.UtcNow)
+        return false;
+
+    var user = _context.Users.FirstOrDefault(r => r.Email == email);
+    if (user == null)
+        return false;
+
+    user.IsActive = true;
+    user.EmailVerified = true;
+    record.IsUsed = true;
+
+    await _context.SaveChangesAsync();
+
+    return true;
+}
     public async Task<bool> ResendOtpAsync(string email)
     {
         // Check if user exists and is not already verified

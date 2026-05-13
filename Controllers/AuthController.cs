@@ -4,133 +4,142 @@ using Microsoft.AspNetCore.Mvc;
 using InventoryManagement.DTOs.User;
 using InventoryManagement.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using InventoryManagement.Data;
+using Microsoft.EntityFrameworkCore;
+
 namespace InventoryManagement.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly AppDbContext _context;
     private readonly ITokenService _tokenService;
-    public AuthController(IUserService UserService, ITokenService TokenService)
-    {
-        _userService = UserService;
-        _tokenService = TokenService;
-    }
+    private readonly IAuthService _authService;
+     private readonly IOtpService _otpService;
+    public AuthController(
+    IUserService userService,
+    ITokenService tokenService,
+    AppDbContext context,
+    IAuthService authService,
+    IOtpService otpService)
+{
+    _userService = userService;
+    _tokenService = tokenService;
+    _context = context;
+    _otpService = otpService;
+    _authService = authService;
+}
     [HttpPost("register")]
-        public async Task<ActionResult<UserDto>> Register([FromBody] UserCreateDto dto)
-        {
-            try
-            {
-                var createdUser = await _userService.CreateUserAsync(dto);
-
-                // Returns 201 Created with the new user
-                return CreatedAtAction(
-                    nameof(Register), 
-                    new { id = createdUser.Id }, 
-                    createdUser);
-            }
-            catch (Exception ex)
-            {
-                // You can make this more specific later (e.g., duplicate username)
-                return BadRequest(new { message = ex.Message });
-            }
-        }
+public async Task<IActionResult> Register(RegisterDto dto)
+{
+    try
+    {
+        var result = await _authService.RegisterAsync(dto);
+        return Ok(result);
+    }
+    catch (Exception ex)
+    {
+        return BadRequest(new { message = ex.Message });
+    }
+}
 
         // POST: api/auth/login
-        [HttpPost("login")]
-        public async Task<ActionResult<object>> Login([FromBody] UserLoginDto dto)
-        {
-            try
-            {
-                // This calls your revised LoginAsync (returns UserDto on success)
-                var user = await _userService.LoginAsync(dto);
-
-                // Generate JWT token using the TokenService
-                var token = _tokenService.GenerateJwtToken(user);
-
-                // Return both user info and token
-                return Ok(new
-                {
-                    user,
-                    token,
-                    expiresIn = 8 * 60 * 60   // 8 hours in seconds (optional)
-                });
-            }
-            catch (InvalidOperationException ex)
-            {
-                // Invalid credentials → 401 Unauthorized
-                return Unauthorized(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-        [HttpGet]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetAll()
-        {
-            var users = await _userService.GetAllAsync();
-            return Ok(users);
-        }
-        [HttpDelete("delete/{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteUser(int id)
+       [HttpPost("login")]
+public async Task<IActionResult> Login(UserLoginDto dto)
+{
+    try
     {
-        var result = await _userService.DeleteUserAsync(id);
-        if (!result)
+        // login user
+        var userDto = await _authService.LoginAsync(dto);
+
+        // fetch full user with roles
+        var user = await _context.Users
+            .Include(u => u.UserRoles)
+            .ThenInclude(ur => ur.Role)
+            .FirstOrDefaultAsync(u => u.Id == userDto.Id);
+
+        if (user == null)
+            return Unauthorized();
+
+        // generate token
+        var token = _tokenService.GenerateJwtToken(user);
+
+        return Ok(new
         {
-            return NotFound("User not found" );
-        }
-        return NoContent();
+            user = userDto,
+            token,
+            expiresIn = 8 * 60 * 60
+        });
     }
-    [HttpPut("deactivate")]
-    [Authorize]
-    public async Task<IActionResult> DeactivateAccount()
+    catch (Exception ex)
     {
-        // Get user ID from JWT claims
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-
-if (userIdClaim == null)
-{
-    return Unauthorized("Invalid token: User ID claim missing.");
-}
-
-if (!int.TryParse(userIdClaim.Value, out int userId))
-{
-    return Unauthorized("Invalid token: User ID claim is not a valid integer.");
-}
-
-var result = await _userService.DeactivateAccountAsync(userId);
-
-if (!result)
-{
-    return NotFound("User not found");
-}
-
-return NoContent();
-
+        return Unauthorized(new { message = ex.Message });
     }
-    [HttpPost("forgot-password")]
-public async Task<IActionResult> ForgetPassword(ForgetPasswordDto dto)
+}
+ 
+[HttpPost("forgot-password")]
+[Authorize]
+public async Task<IActionResult> ForgetPassword(string email)
 {
-    await _userService.ForgetPasswordAsync(dto.Email);
-    return Ok("OTP sent to your email");
+    try
+    {
+        await _authService.ForgetPasswordAsync(email);
+        return Ok("OTP sent successfully");
+    }
+    catch (Exception ex)
+    {
+        return BadRequest(new { message = ex.Message });
+    }
 }
 [HttpPost("reset-password")]
+[Authorize]
 public async Task<IActionResult> ResetPassword(ResetPasswordDto dto)
 {
-    // Verify OTP and reset password through UserService
-    await _userService.ResetPasswordAsync(dto);
-    return Ok("Password reset successfully");
+    try
+    {
+        await _authService.ResetPasswordAsync(dto);
+        return Ok("Password reset successful");
+    }
+    catch (Exception ex)
+    {
+        return BadRequest(new { message = ex.Message });
+    }
 }
 [Authorize]
 [HttpPost("change-password")]
 public async Task<IActionResult> ChangePassword(ChangePasswordDto dto)
 {
-    await _userService.ChangePasswordAsync(dto);
-    return Ok("Password changed successfully");
+    try
+    {
+        await _authService.ChangePasswordAsync(dto);
+        return Ok("Password changed successfully");
+    }
+    catch (Exception ex)
+    {
+        return BadRequest(new { message = ex.Message });
+    }
 }
+[HttpPost("Verify-otp")]
+    public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto dto)
+    {
+        var result = await _otpService.VerifyOtpAsync(dto.Email, dto.Otp);
+        if (!result)
+        {
+            return BadRequest("Invalid or expired OTP.");
+        }
+        return Ok("Email verified successfully.");
+    }
+    [HttpPost("Resend-otp")]
+    public async Task<IActionResult> ResendOtp([FromBody] ResendOtpDto dto)
+    {
+        var result = await _otpService.ResendOtpAsync(dto.Email); 
+        if (!result)
+        {
+            return BadRequest("Unable to resend OTP. User may already be verified");
+        }
+        return Ok("OTP resent successfully.");
+    }
 }
 
    

@@ -27,4 +27,5 @@ public class ProductUpdateDto
 
     [Required]
     public int CategoryId { get; set; }
+    public int Threshold { get; set; }
 }

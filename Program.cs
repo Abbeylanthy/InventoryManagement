@@ -1,3 +1,5 @@
+using Hangfire;
+using Hangfire.SqlServer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using InventoryManagement.Data;
@@ -20,6 +22,12 @@ var builder = WebApplication.CreateBuilder(args);
 // Register Services
 // ===============================================
 
+builder.Services.AddHangfire(config =>
+    config.UseSqlServerStorage(
+        builder.Configuration.GetConnectionString("DefaultConnection")
+    ));
+
+builder.Services.AddHangfireServer();
 // Controllers
 builder.Services.AddControllers();
 
@@ -27,18 +35,20 @@ builder.Services.AddControllers();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
+       options.TokenValidationParameters = new TokenValidationParameters
+{
+    ValidateIssuer = true,
+    ValidateAudience = true,
+    ValidateLifetime = true,
+    ValidateIssuerSigningKey = true,
 
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
-        };
+    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+    ValidAudience = builder.Configuration["Jwt:Audience"],
+    IssuerSigningKey = new SymmetricSecurityKey(
+        Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
+
+    RoleClaimType = System.Security.Claims.ClaimTypes.Role
+};
     });
 
 // Authorization
@@ -77,12 +87,15 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IOtpService, OtpService>();
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ISupplierService, SupplierService>();
 builder.Services.AddScoped<IStockService, StockService>();
+builder.Services.AddScoped<IInventoryMonitoringService, InventoryMonitoringService>();
 
 
 // AutoMapper
@@ -90,10 +103,17 @@ builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 var app = builder.Build();
 
-// ===============================================
-// Configure Middleware
-// ===============================================
+using (var scope = app.Services.CreateScope())
+{
+    var recurringJobManager = scope.ServiceProvider
+        .GetRequiredService<IRecurringJobManager>(); // Get Hangfire's recurring job manager from DI
 
+    recurringJobManager.AddOrUpdate<IInventoryMonitoringService>(
+        "low-stock-check",
+        service => service.CheckLowStockProductsAsync(),
+        Cron.Minutely
+    ); 
+}
 // Swagger (Development only)
 if (app.Environment.IsDevelopment())
 {
@@ -104,9 +124,9 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
-// IMPORTANT ORDER
-app.UseAuthentication();   // MUST come before Authorization
+app.UseAuthentication();   
 app.UseAuthorization();
+app.UseHangfireDashboard();
 
 app.MapControllers();
 

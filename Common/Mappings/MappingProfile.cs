@@ -37,9 +37,10 @@ public class MappingProfile : Profile
         CreateMap<Product, ProductDto>()
             .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category!.Name)); // Include basic category info
 // Map UserCreateDto → User (for creating)
-            CreateMap<User, UserDto>()
-    .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.ToString()));
-
+          CreateMap<User, UserDto>()
+    .ForMember(dest => dest.Roles,
+        opt => opt.MapFrom(src =>
+            src.UserRoles.Select(ur => ur.Role.Name)));
 CreateMap<UserCreateDto, User>();
     }
 }

@@ -21,7 +21,7 @@ public class ProductsController : ControllerBase
     // POST: api/products
     // This endpoint will only show fields from ProductCreateDto (clean, no nested Category)
     [HttpPost]
-    [Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin")] 
     public async Task<IActionResult> Create([FromBody] ProductCreateDto dto)
     {
         // If validation fails (e.g. missing required fields), return bad request
@@ -35,10 +35,8 @@ public class ProductsController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
-    // GET: api/products
-    // Supports optional query parameters: ?search=keyword&sort=price_desc&pageNumber=1&pageSize=10
     [HttpGet]
-    [Authorize]   // Any authenticated user can view products
+    [Authorize]  
     public async Task<IActionResult> GetAll(
         [FromQuery] string? search = null,      // Optional search term
         [FromQuery] string? sort = null,        // Optional sorting
@@ -51,15 +49,15 @@ public class ProductsController : ControllerBase
 
     // GET: api/products/{id}
     [HttpGet("{id}")]
-    [Authorize]   // Any authenticated user can view a specific product
+    [Authorize]  
     public async Task<IActionResult> GetById(int id)
     {
         var product = await _productService.GetByIdAsync(id);
         return product == null ? NotFound() : Ok(product);
     }
-    // PUT: api/products/{id}  → Full update of a product
+
 [HttpPut("{id}")]
-[Authorize(Roles = "Admin,Staff")]
+[Authorize(Roles = "Admin")]
 public async Task<IActionResult> Update(int id, [FromBody] ProductUpdateDto dto)
 {
     // Step 1: Check if the data sent by the user is valid according to the DTO rules
@@ -74,7 +72,6 @@ public async Task<IActionResult> Update(int id, [FromBody] ProductUpdateDto dto)
     return result == null ? NotFound() : Ok(result);
 }
 
-    // DELETE: api/products/{id}   → Hard delete (completely removes from database)
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int id)
@@ -83,9 +80,9 @@ public async Task<IActionResult> Update(int id, [FromBody] ProductUpdateDto dto)
         return success ? NoContent() : NotFound();
     }
 
-    // PATCH: api/products/{id}/toggle-active?isActive=false
     // Used to deactivate or reactivate a product
     [HttpPatch("{id}/toggle-active")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> ToggleActive(int id, [FromQuery] bool isActive)
     {
         var success = await _productService.ToggleActiveAsync(id, isActive);
