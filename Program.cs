@@ -1,5 +1,3 @@
-using Hangfire;
-using Hangfire.SqlServer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using InventoryManagement.Data;
@@ -22,14 +20,13 @@ var builder = WebApplication.CreateBuilder(args);
 // Register Services
 // ===============================================
 
-builder.Services.AddHangfire(config =>
-    config.UseSqlServerStorage(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-    ));
-
-builder.Services.AddHangfireServer();
 // Controllers
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+ .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.DefaultIgnoreCondition =
+            System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+    });
 
 // JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -96,24 +93,14 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ISupplierService, SupplierService>();
 builder.Services.AddScoped<IStockService, StockService>();
 builder.Services.AddScoped<IInventoryMonitoringService, InventoryMonitoringService>();
-
+builder.Services.Configure<InventoryMonitoringSettings>(builder.Configuration.GetSection("InventoryMonitoring"));
+builder.Services.AddHostedService<InventoryMonitoringBackgroundService>();
 
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var recurringJobManager = scope.ServiceProvider
-        .GetRequiredService<IRecurringJobManager>(); // Get Hangfire's recurring job manager from DI
-
-    recurringJobManager.AddOrUpdate<IInventoryMonitoringService>(
-        "low-stock-check",
-        service => service.CheckLowStockProductsAsync(),
-        Cron.Minutely
-    ); 
-}
 // Swagger (Development only)
 if (app.Environment.IsDevelopment())
 {
@@ -126,7 +113,6 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.UseAuthentication();   
 app.UseAuthorization();
-app.UseHangfireDashboard();
 
 app.MapControllers();
 

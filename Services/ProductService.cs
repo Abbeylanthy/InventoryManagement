@@ -7,7 +7,8 @@ using InventoryManagement.Entities;                    // Access to Product and 
 using InventoryManagement.DTOs.Product;                // ProductCreateDto, ProductUpdateDto, ProductDto
 using InventoryManagement.Services.Interfaces;         // IProductService interface contract
 using InventoryManagement.Repositories.Interfaces;     // IGenericRepository interface for CRUD ops
-using System.Linq.Expressions;                         // Used to build dynamic search filter expressions
+using System.Linq.Expressions;  
+using System.Security.Claims;                   
 
 namespace InventoryManagement.Services;
 
@@ -20,17 +21,21 @@ public class ProductService : IProductService
     private readonly IGenericRepository<Product> _repository;
     private readonly IMapper _mapper;
     private readonly AppDbContext _context;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     public ProductService(
         IGenericRepository<Product> repository, 
         IMapper mapper,
-        AppDbContext context)
+        AppDbContext context,
+        IHttpContextAccessor httpContextAccessor)
     {
         _repository = repository;
         _mapper = mapper;
         _context = context;
+        _httpContextAccessor = httpContextAccessor;
     }
     public async Task<ProductDto> CreateAsync(ProductCreateDto dto)
     {
+        Console.WriteLine(dto.Threshold);
         var product = _mapper.Map<Product>(dto);
         await _repository.AddAsync(product);
 
@@ -69,7 +74,7 @@ public async Task<IEnumerable<ProductDto>> GetAllAsync(
     if (!string.IsNullOrEmpty(search))
     {
         query = query.Where(p => p.Name.Contains(search) ||
-                                (p.Description != null && p.Description.Contains(search)));
+     (p.Description != null && p.Description.Contains(search)));
     }
 
     // Apply sorting
@@ -95,12 +100,29 @@ public async Task<IEnumerable<ProductDto>> GetAllAsync(
         .Take(pageSize)
         .ToListAsync();
 
-    // Map to DTOs (same style as GetByIdAsync)
-    return _mapper.Map<IEnumerable<ProductDto>>(pagedProducts);
+    var user = _httpContextAccessor.HttpContext?.User;
+
+bool canSeeThreshold =
+    user != null &&
+    (
+        user.IsInRole("Admin") ||
+        user.IsInRole("Manager") ||
+        user.IsInRole("Staff")
+    );
+
+var productDtos = _mapper.Map<IEnumerable<ProductDto>>(pagedProducts);
+
+if (!canSeeThreshold)
+{
+    foreach (var product in productDtos)
+    {
+        product.Threshold = null;
+    }
 }
-    /// <summary>
-    /// Get a product by Id with category included, or null if not found
-    /// </summary>
+
+return productDtos;
+    
+}
     public async Task<ProductDto?> GetByIdAsync(int id)
     {
         // Query using AppDbContext to include related Category object
@@ -109,12 +131,29 @@ public async Task<IEnumerable<ProductDto>> GetAllAsync(
             .FirstOrDefaultAsync(p => p.Id == id);
 
         // Return null if no product, else map to DTO
-        return product == null ? null : _mapper.Map<ProductDto>(product);
+        if (product == null)
+    return null;
+
+var user = _httpContextAccessor.HttpContext?.User;
+
+bool canSeeThreshold =
+    user != null &&
+    (
+        user.IsInRole("Admin") ||
+        user.IsInRole("Manager") ||
+        user.IsInRole("Staff")
+    );
+
+var productDto = _mapper.Map<ProductDto>(product);
+
+if (!canSeeThreshold)
+{
+    productDto.Threshold = null;
+}
+
+return productDto;
     }
 
-    /// <summary>
-    /// Deletes a product by Id
-    /// </summary>
     public async Task<bool> DeleteAsync(int id)
     {
         // Perform delete through generic repository
