@@ -12,6 +12,10 @@ using System.Text;
 using Microsoft.OpenApi;
 using InventoryManagement.Entities;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Authorization;
+using InventoryManagement.Authorization;
+using InventoryManagement.Data.Seed;
+
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -93,13 +97,25 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ISupplierService, SupplierService>();
 builder.Services.AddScoped<IStockService, StockService>();
 builder.Services.AddScoped<IInventoryMonitoringService, InventoryMonitoringService>();
+builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.Configure<InventoryMonitoringSettings>(builder.Configuration.GetSection("InventoryMonitoring"));
 builder.Services.AddHostedService<InventoryMonitoringBackgroundService>();
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider
+        .GetRequiredService<AppDbContext>();
+
+    await InventoryManagement.Data.Seed.DataBaseSeeder
+        .SeedAsync(context);
+}
 
 // Swagger (Development only)
 if (app.Environment.IsDevelopment())

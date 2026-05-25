@@ -3,7 +3,7 @@ using AutoMapper;
 using InventoryManagement.DTOs.Category;
 using InventoryManagement.DTOs.Product;
 using InventoryManagement.DTOs.User;
-
+using InventoryManagement.DTOs.Permission;
 
 namespace InventoryManagement.Common.Mappings;
 
@@ -42,5 +42,9 @@ public class MappingProfile : Profile
         opt => opt.MapFrom(src =>
             src.UserRoles.Select(ur => ur.Role.Name)));
 CreateMap<UserCreateDto, User>();
+
+CreateMap<Permission, PermissionDto>();
+
+CreateMap<CreatePermissionDto, Permission>();
     }
 }

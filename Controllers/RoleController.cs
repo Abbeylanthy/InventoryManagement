@@ -15,7 +15,7 @@ public class RoleController : ControllerBase
     {
         _roleService = roleService;
     }
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "SuperAdmin")]
     [HttpPost]
 public async Task<IActionResult> CreateRole(CreateRoleDto dto)
 {
@@ -29,14 +29,14 @@ public async Task<IActionResult> CreateRole(CreateRoleDto dto)
         return BadRequest(new { message = ex.Message });
     }
 }
-[Authorize(Roles = "Admin,Staff")] 
+[Authorize(Roles = "SuperAdmin")] 
 [HttpGet]
-public async Task<IActionResult> GetAllRoles()
+public async Task<IActionResult> GetAll([FromQuery] bool? isActive)
 {
-    var roles = await _roleService.GetAllRolesAsync();
+    var roles = await _roleService.GetAllRolesAsync(isActive);
     return Ok(roles);
 }
-[Authorize(Roles = "Admin,Staff")]
+[Authorize(Roles = "SuperAdmin")]
 [HttpGet("{id}")]
 public async Task<IActionResult> GetRoleById(int id)
 {
@@ -47,7 +47,7 @@ public async Task<IActionResult> GetRoleById(int id)
 
     return Ok(role);
 }
-[Authorize(Roles = "Admin,Staff")]
+[Authorize(Roles = "SuperAdmin")]
 [HttpGet("name/{name}")]
 public async Task<IActionResult> GetRoleByName(string name)
 {
@@ -58,7 +58,7 @@ public async Task<IActionResult> GetRoleByName(string name)
 
     return Ok(role);
 }
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "SuperAdmin")]
 [HttpPut("{id}")]
 public async Task<IActionResult> UpdateRole(int id, CreateRoleDto dto)
 {
@@ -69,7 +69,20 @@ public async Task<IActionResult> UpdateRole(int id, CreateRoleDto dto)
 
     return Ok("Role updated successfully");
 }
-[Authorize(Roles = "Admin")]
+
+[Authorize(Roles = "SuperAdmin")]
+[HttpPut("activate/{id}")]
+public async Task<IActionResult> ActivateRole(int id)
+{
+    var result = await _roleService.ActivateRoleAsync(id);
+
+    if (!result)
+        return NotFound();
+
+    return Ok("Role activated successfully");
+}
+
+[Authorize(Roles = "SuperAdmin")]
 [HttpPut("deactivate/{id}")]
 public async Task<IActionResult> DeactivateRole(int id)
 {
@@ -80,26 +93,30 @@ public async Task<IActionResult> DeactivateRole(int id)
 
     return Ok("Role deactivated successfully");
 }
-[Authorize(Roles = "Admin")]
-[HttpPost("assign")]
-public async Task<IActionResult> AssignRoleToUser(int userId, int roleId)
+[Authorize(Roles = "SuperAdmin")]
+[HttpPost("assign-role-to-users")]
+public async Task<IActionResult> AssignRoleToUsers(  AssignRoleDto dto)
 {
-    var result = await _roleService.AssignRoleToUserAsync(userId, roleId);
+    var result = await _roleService
+        .AssignRoleToUsersAsync(dto);
 
     if (!result)
-        return BadRequest("Assignment failed");
+        return BadRequest("Role assignment failed");
 
-    return Ok("Role assigned to user successfully");
+    return Ok("Role assigned successfully");
 }
-[Authorize(Roles = "Admin")]
-[HttpPost("remove")]
-public async Task<IActionResult> RemoveRoleFromUser(int userId, int roleId)
+[Authorize(Roles = "SuperAdmin")]
+[HttpPost("remove-role")]
+public async Task<IActionResult> RemoveRoleFromUsers(
+    AssignRoleDto dto)
 {
-    var result = await _roleService.RemoveRoleFromUserAsync(userId, roleId);
+    var result = await _roleService
+        .RemoveRoleFromUsersAsync(dto);
 
     if (!result)
-        return BadRequest("Removal failed");
+        return BadRequest("Failed to remove role");
 
-    return Ok("Role removed from user successfully");
+    return Ok("Role removed successfully");
 }
+
 }

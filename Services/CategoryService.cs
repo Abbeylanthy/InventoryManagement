@@ -53,8 +53,12 @@ public class CategoryService : ICategoryService
         // Pseudo-step 1: query database for all Category records
         var categories = await _repository.GetAllAsync();
 
+        // Newest categories first
+        var orderedCategories = categories
+            .OrderByDescending(c => c.CreatedAt);
+
         // Pseudo-step 2: convert the raw Category entities into response DTOs
-        return _mapper.Map<IEnumerable<CategoryDto>>(categories);
+        return _mapper.Map<IEnumerable<CategoryDto>>(orderedCategories);
     }
 
     /// <summary>
@@ -89,17 +93,17 @@ public class CategoryService : ICategoryService
     public async Task<bool> ToggleActiveAsync(int id, bool isActive)
     {
         // Get the existing category entity
-        var category = await _repository.GetByIdAsync(id);
+        var category = await _repository.GetByIdAsync(id); 
 
         // If missing, indicate failure
-        if (category == null) return false;
+        if (category == null) return false; 
 
         // Update the IsActive flag and timestamp
         category.IsActive = isActive;
-        category.UpdatedAt = DateTime.UtcNow;
+        category.UpdatedAt = DateTime.UtcNow; 
 
         // Save the changes in repository and database
-        await _repository.UpdateAsync(category);
+        await _repository.UpdateAsync(category); 
         await _repository.SaveChangesAsync();
 
         return true;

@@ -50,25 +50,12 @@ public async Task<IActionResult> Login(UserLoginDto dto)
 {
     try
     {
-        // login user
-        var userDto = await _authService.LoginAsync(dto);
-
-        // fetch full user with roles
-        var user = await _context.Users
-            .Include(u => u.UserRoles)
-            .ThenInclude(ur => ur.Role)
-            .FirstOrDefaultAsync(u => u.Id == userDto.Id);
-
-        if (user == null)
-            return Unauthorized();
-
-        // generate token
-        var token = _tokenService.GenerateJwtToken(user);
+        var authResponse = await _authService.LoginAsync(dto);
 
         return Ok(new
         {
-            user = userDto,
-            token,
+            user = authResponse.User,
+            token = authResponse.Token,
             expiresIn = 8 * 60 * 60
         });
     }

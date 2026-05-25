@@ -3,8 +3,11 @@ using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;        // Added for [Precision] attribute
 
 namespace InventoryManagement.Entities;
-public class Product : BaseEntity
+public class Product 
 {
+     [Key]
+    public int Id { get; set; }
+
     [Required]
     [StringLength(200)]
     public string Name { get; set; } = string.Empty;
@@ -30,6 +33,7 @@ public class Product : BaseEntity
     public int CategoryId { get; set; }
     public int SupplierId { get; set; } 
     public int Threshold { get; set; }
+    public bool IsActive { get; set; } = true;
     public Supplier Supplier { get; set; } = null!; 
     [JsonIgnore]
     public virtual Category? Category { get; set; } 

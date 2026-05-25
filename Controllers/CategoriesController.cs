@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using InventoryManagement.DTOs.Category;
 using InventoryManagement.Services.Interfaces;
+using InventoryManagement.Authorization;
 
 namespace InventoryManagement.Controllers;
 
@@ -18,7 +19,7 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [HasPermission("CreateCategory")] 
     public async Task<IActionResult> Create([FromBody] CategoryCreateDto dto)
     {
         if (!ModelState.IsValid)
@@ -45,7 +46,7 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
+    [HasPermission("DeleteCategory")]
     public async Task<IActionResult> Delete(int id)
     {
         var success = await _categoryService.DeleteAsync(id);
@@ -53,7 +54,7 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpPatch("{id}/toggle-active")]
-    [Authorize(Roles = "Admin")]
+    [HasPermission("ToggleCategory")]
     public async Task<IActionResult> ToggleActive(int id, [FromQuery] bool isActive)
     {
         var success = await _categoryService.ToggleActiveAsync(id, isActive);
@@ -61,7 +62,7 @@ public class CategoriesController : ControllerBase
     }
     
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin")]
+    [HasPermission("UpdateCategory")]
     public async Task<IActionResult> Update(int id, [FromBody] CategoryUpdateDto dto)
     {
         // If the incoming data doesn't match validation rules, return bad request

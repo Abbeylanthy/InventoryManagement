@@ -31,6 +31,8 @@ public class AppDbContext : DbContext
     public DbSet<Role> Roles { get; set; }
     public DbSet<UserRole> UserRoles { get; set; }
     public DbSet<StockHistory> StockHistories { get; set; } = null!;
+    public DbSet<Permission> Permissions { get; set; } = null!;
+    public DbSet<RolePermission> RolePermissions { get; set; } = null!;
 
     /// <summary>
     /// This method is called when EF Core is building the database model.
@@ -65,14 +67,24 @@ public class AppDbContext : DbContext
             .HasForeignKey(p => p.CategoryId)           // The column that holds the link (foreign key)
             .OnDelete(DeleteBehavior.NoAction);          // If category is deleted, delete all its products too
 
-        // Global Query Filter: Automatically filter out inactive records
-        // This means whenever we query, only IsActive = true records are returned by default
-        modelBuilder.Entity<BaseEntity>()
-            .HasQueryFilter(e => e.IsActive);
+    
 
             modelBuilder.Entity<Product>()
             .HasOne(p => p.Supplier)
         .WithMany(s => s.Products)
         .HasForeignKey(p => p.SupplierId);
+
+        modelBuilder.Entity<RolePermission>()
+    .HasKey(rp => new { rp.RoleId, rp.PermissionId }); 
+
+modelBuilder.Entity<RolePermission>()
+    .HasOne(rp => rp.Role)
+    .WithMany(r => r.RolePermissions)
+    .HasForeignKey(rp => rp.RoleId); 
+
+modelBuilder.Entity<RolePermission>()
+    .HasOne(rp => rp.Permission)
+    .WithMany(p => p.RolePermissions)
+    .HasForeignKey(rp => rp.PermissionId); 
     }
 }

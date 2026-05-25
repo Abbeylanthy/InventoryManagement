@@ -2,10 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using InventoryManagement.DTOs.Supplier;
 using InventoryManagement.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using InventoryManagement.Authorization;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin")]
 public class SupplierController : ControllerBase
 {
     private readonly ISupplierService _supplierService;
@@ -16,7 +16,7 @@ public class SupplierController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [HasPermission("CreateSupplier")]
     public async Task<IActionResult> CreateSupplier(SupplierCreateDto dto)
     {
         var result = await _supplierService.CreateSupplierAsync(dto);
@@ -24,7 +24,7 @@ public class SupplierController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin,Staff")]
+    [HasPermission("GetSuppliers")]
     public async Task<IActionResult> GetAllSuppliers()
     {
         var result = await _supplierService.GetAllSuppliersAsync();
@@ -32,7 +32,7 @@ public class SupplierController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [Authorize(Roles = "Admin,Staff")]
+    [HasPermission("GetSupplierById")]
     public async Task<IActionResult> GetSupplierById(int id)
     {
         var result = await _supplierService.GetSupplierByIdAsync(id);
@@ -44,7 +44,7 @@ public class SupplierController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin")]
+    [HasPermission("UpdateSupplier")]
 public async Task<IActionResult> UpdateSupplier(int id, SupplierCreateDto dto)
 {
     var result = await _supplierService.UpdateSupplierAsync(id, dto);
@@ -52,7 +52,7 @@ public async Task<IActionResult> UpdateSupplier(int id, SupplierCreateDto dto)
 }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
+    [HasPermission("DeleteSupplier")]
     public async Task<IActionResult> DeleteSupplier(int id)
     {
         var result = await _supplierService.DeleteSupplierAsync(id);

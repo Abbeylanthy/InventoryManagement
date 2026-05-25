@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using InventoryManagement.DTOs.User;
 using InventoryManagement.DTOs.Role;
+using InventoryManagement.DTOs.Permission;
 using InventoryManagement.Entities;
 using InventoryManagement.Data;
 using InventoryManagement.Services.Interfaces;
@@ -24,7 +25,6 @@ public class UserService : IUserService
         _otpService = otpService;
     }
 
-    // ---------------- CREATE USER ----------------
     public async Task<UserDto> CreateUserAsync(UserCreateDto dto)
     {
         if (await _context.Users.AnyAsync(u =>
@@ -77,12 +77,12 @@ public class UserService : IUserService
     };
     }
 
-    // ---------------- GET ALL ----------------
     public async Task<IEnumerable<UserDto>> GetAllAsync()
     {
         var users = await _context.Users 
             .Include(u => u.UserRoles)
             .ThenInclude(r => r.Role)
+            .OrderByDescending(u => u.Id)
             .ToListAsync();
 
         return users.Select(u => new UserDto
@@ -99,37 +99,47 @@ public class UserService : IUserService
         });
     }
 
-    // ---------------- GET BY ID ----------------
-    public async Task<UserDto> GetByIdAsync(int id)
-    {
-        var user = await _context.Users
-            .Include(u => u.UserRoles)
+   public async Task<UserDto> GetByIdAsync(int id)
+{
+    var user = await _context.Users
+        .Include(u => u.UserRoles)
             .ThenInclude(r => r.Role)
-            .FirstOrDefaultAsync(u => u.Id == id);
+                .ThenInclude(r => r.RolePermissions)
+                    .ThenInclude(rp => rp.Permission)
+        .FirstOrDefaultAsync(u => u.Id == id);
 
-        if (user == null) return null!;
+    if (user == null) return null!;
 
-        return new UserDto
-        {
-            Id = user.Id,
-            UserName = user.UserName,
-             Roles = user.UserRoles
-    .Select(r => new RoleMinDto
+    return new UserDto
     {
-        Id = r.Role.Id,
-        Name = r.Role.Name
-    })
-    .ToList()
-        };
-    }
+        Id = user.Id,
+        UserName = user.UserName,
 
-    // ---------------- GET BY ROLE ----------------
+        Roles = user.UserRoles
+            .Select(r => new RoleMinDto
+            {
+                Id = r.Role.Id,
+                Name = r.Role.Name,
+
+                Permissions = r.Role.RolePermissions
+                    .Select(rp => new PermissionMinDto
+                    {
+                        Id = rp.Permission.Id,
+                        Name = rp.Permission.Name
+                    })
+                    .ToList()
+            })
+            .ToList()
+    };
+}
+
     public async Task<IEnumerable<UserDto>> GetByRoleIdAsync(int roleId)
     {
         var users = await _context.Users
             .Include(u => u.UserRoles)
             .ThenInclude(r => r.Role)
             .Where(u => u.UserRoles.Any(r => r.RoleId == roleId))
+            .OrderByDescending(u => u.Id)
             .ToListAsync();
 
         return users.Select(u => new UserDto
@@ -146,13 +156,13 @@ public class UserService : IUserService
         });
     }
 
-    // ---------------- GET BY GENDER ----------------
     public async Task<IEnumerable<UserDto>> GetByGenderAsync(string gender)
     {
         var users = await _context.Users
             .Include(u => u.UserRoles)
             .ThenInclude(r => r.Role)
             .Where(u => u.Gender == gender)
+            .OrderByDescending(u => u.Id)
             .ToListAsync();
 
         return users.Select(u => new UserDto
@@ -169,7 +179,6 @@ public class UserService : IUserService
         });
     }
 
-    // ---------------- UPDATE USER ----------------
     public async Task<UserDto> UpdateUserAsync(int id, UserUpdateDto dto)
     {
         var user = await _context.Users
@@ -203,7 +212,6 @@ public class UserService : IUserService
         };
     }
 
-    // ---------------- DELETE ----------------
     public async Task<bool> DeleteUserAsync(int userId)
     {
         var user = await _context.Users.FindAsync(userId);
@@ -216,7 +224,6 @@ public class UserService : IUserService
         return true;
     }
 
-    // ---------------- DEACTIVATE ----------------
     public async Task<bool> DeactivateAccountAsync(int userId)
     {
         var user = await _context.Users.FindAsync(userId);

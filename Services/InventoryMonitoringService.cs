@@ -30,7 +30,7 @@ public class  InventoryMonitoringService : IInventoryMonitoringService
         var admins = await _context.Users 
             .Include(u => u.UserRoles)
             .ThenInclude(ur => ur.Role)
-            .Where(u => u.UserRoles.Any(ur => ur.Role.Name == "Admin")) 
+            .Where(u => u.UserRoles.Any(ur => ur.Role.Name == "SuperAdmin")) 
             .ToListAsync();
 
         if (!admins.Any())

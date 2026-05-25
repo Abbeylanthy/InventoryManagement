@@ -3,10 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using InventoryManagement.DTOs.Stock_In;
 using InventoryManagement.DTOs.Stock_Out;
 using InventoryManagement.Services.Interfaces;
+using InventoryManagement.Authorization;
 
 [ApiController]
 [Route("api/stock")]
-[Authorize(Roles = "Admin")]
+[Authorize]
 public class StockController : ControllerBase
 {
     private readonly IStockService _stockService;
@@ -16,21 +17,21 @@ public class StockController : ControllerBase
     }
 
     [HttpPost("in")]
-    [Authorize(Roles = "Admin,Staff")]
+    [HasPermission("StockIn")]
     public async Task<IActionResult> StockIn(StockInDto dto)
     {
         await _stockService.StockIn(dto);
         return Ok("Stock added successfully");
     }
     [HttpPost("out")]
-    [Authorize(Roles = "Admin,Staff")]
+    [HasPermission("StockOut")]
     public async Task<IActionResult> StockOut(StockOutDto dto)
     {
         await _stockService.StockOut(dto);
         return Ok("Stock removed successfully");
     }
     [HttpGet("history/{productId}")]
-    [Authorize(Roles = "Admin,Staff")]
+    [HasPermission("ViewStockHistory")]
 public async Task<IActionResult> GetStockHistory(int productId)
 {
     var history = await _stockService.GetStockHistory(productId);

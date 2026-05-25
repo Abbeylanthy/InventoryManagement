@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using InventoryManagement.DTOs.Product;
 using InventoryManagement.Services.Interfaces;
+using InventoryManagement.Authorization;
 
 namespace InventoryManagement.Controllers;
 
@@ -21,7 +22,7 @@ public class ProductsController : ControllerBase
     // POST: api/products
     // This endpoint will only show fields from ProductCreateDto (clean, no nested Category)
     [HttpPost]
-    [Authorize(Roles = "Admin")] 
+    [HasPermission("CreateProduct")]
     public async Task<IActionResult> Create([FromBody] ProductCreateDto dto)
     {
         // If validation fails (e.g. missing required fields), return bad request
@@ -57,7 +58,7 @@ public class ProductsController : ControllerBase
     }
 
 [HttpPut("{id}")]
-[Authorize(Roles = "Admin")]
+[HasPermission("UpdateProduct")]
 public async Task<IActionResult> Update(int id, [FromBody] ProductUpdateDto dto)
 {
     // Step 1: Check if the data sent by the user is valid according to the DTO rules
@@ -73,7 +74,7 @@ public async Task<IActionResult> Update(int id, [FromBody] ProductUpdateDto dto)
 }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
+    [HasPermission("DeleteProduct")]
     public async Task<IActionResult> Delete(int id)
     {
         var success = await _productService.DeleteAsync(id);
@@ -82,7 +83,7 @@ public async Task<IActionResult> Update(int id, [FromBody] ProductUpdateDto dto)
 
     // Used to deactivate or reactivate a product
     [HttpPatch("{id}/toggle-active")]
-    [Authorize(Roles = "Admin")]
+    [HasPermission("ToggleProduct")]
     public async Task<IActionResult> ToggleActive(int id, [FromQuery] bool isActive)
     {
         var success = await _productService.ToggleActiveAsync(id, isActive);

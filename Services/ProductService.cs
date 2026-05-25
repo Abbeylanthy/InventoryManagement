@@ -91,7 +91,7 @@ public async Task<IEnumerable<ProductDto>> GetAllAsync(
     }
     else
     {
-        query = query.OrderBy(p => p.Name);   // Default sort
+        query = query.OrderByDescending(p => p.CreatedAt);   // Default sort: newest products first
     }
 
     // Apply pagination and execute the query
@@ -105,7 +105,7 @@ public async Task<IEnumerable<ProductDto>> GetAllAsync(
 bool canSeeThreshold =
     user != null &&
     (
-        user.IsInRole("Admin") ||
+        user.IsInRole("SuperAdmin") ||
         user.IsInRole("Manager") ||
         user.IsInRole("Staff")
     );
@@ -139,7 +139,7 @@ var user = _httpContextAccessor.HttpContext?.User;
 bool canSeeThreshold =
     user != null &&
     (
-        user.IsInRole("Admin") ||
+        user.IsInRole("SuperAdmin") ||
         user.IsInRole("Manager") ||
         user.IsInRole("Staff")
     );

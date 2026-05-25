@@ -33,6 +33,17 @@ public class TokenService : ITokenService
         claims.Add(new Claim(ClaimTypes.Role, userRole.Role.Name));
     }
 
+    var permissions = user.UserRoles
+    .SelectMany(ur => ur.Role.RolePermissions)
+    .Select(rp => rp.Permission.Name)
+    .Distinct()
+    .ToList();
+
+foreach (var permission in permissions)
+{
+    claims.Add(new Claim("Permission", permission));
+}
+
     var key = new SymmetricSecurityKey(
         Encoding.UTF8.GetBytes(_config["Jwt:Key"]!)
     );

@@ -56,6 +56,7 @@ if (existingSupplier != null)
     public async Task<List<SupplierDto>> GetAllSuppliersAsync()
     {
         return await _context.Suppliers
+            .OrderByDescending(s => s.CreatedAt)
             .Select(s => new SupplierDto
             {
                 Id = s.Id,

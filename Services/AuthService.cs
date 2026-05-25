@@ -7,6 +7,7 @@
 using InventoryManagement.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using InventoryManagement.DTOs.Auth;
 namespace InventoryManagement.Services;
  public class AuthService : IAuthService
  {
@@ -14,13 +15,20 @@ namespace InventoryManagement.Services;
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly IOtpService _otpService;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ITokenService _tokenService;
 
-    public AuthService(AppDbContext context, IPasswordHasher<User> passwordHasher, IOtpService otpService, IHttpContextAccessor httpContextAccessor)
+    public AuthService(AppDbContext context,
+     IPasswordHasher<User> passwordHasher,
+      IOtpService otpService,
+       IHttpContextAccessor httpContextAccessor,
+        ITokenService tokenService)
     {
         _context = context;
         _passwordHasher = passwordHasher;
         _otpService = otpService;
         _httpContextAccessor = httpContextAccessor;
+        _tokenService = tokenService;
+
     }
 
     public async Task<UserDto> RegisterAsync(RegisterDto dto)
@@ -78,11 +86,13 @@ namespace InventoryManagement.Services;
     .ToList()
         };
     }
- public async Task<UserDto> LoginAsync(UserLoginDto dto)
+ public async Task<AuthResponseDto> LoginAsync(UserLoginDto dto)
 {
     var user = await _context.Users
     .Include(u => u.UserRoles)
     .ThenInclude(ur => ur.Role)
+        .ThenInclude(r => r.RolePermissions)
+            .ThenInclude(rp => rp.Permission)
     .FirstOrDefaultAsync(u => u.UserName == dto.UserName);
 
 if (user == null)
@@ -98,17 +108,23 @@ var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash!, dto.
 if (result == PasswordVerificationResult.Failed)
     throw new InvalidOperationException("Invalid username or password.");
 
-    return new UserDto
+    var token = _tokenService.GenerateJwtToken(user);
+
+return new AuthResponseDto
 {
-    Id = user.Id,
-    UserName = user.UserName,
-    Roles = user.UserRoles
-    .Select(ur => new RoleMinDto
+    User = new UserDto
     {
-        Id = ur.Role.Id,
-        Name = ur.Role.Name
-    })
-    .ToList()
+        Id = user.Id,
+        UserName = user.UserName,
+        Roles = user.UserRoles
+            .Select(ur => new RoleMinDto
+            {
+                Id = ur.Role.Id,
+                Name = ur.Role.Name
+            })
+            .ToList()
+    },
+    Token = token
 };
 }
 

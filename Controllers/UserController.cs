@@ -16,7 +16,7 @@ public class UserController : ControllerBase
         _userService = userService;
     }
     [HttpPost("create")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "SuperAdmin")]
 public async Task<IActionResult> CreateUser(UserCreateDto dto)
 {
     try
@@ -30,14 +30,14 @@ public async Task<IActionResult> CreateUser(UserCreateDto dto)
     }
 }
 [HttpGet]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "SuperAdmin")]
 public async Task<IActionResult> GetAll()
 {
     var users = await _userService.GetAllAsync();
     return Ok(users);
 }
 [HttpGet("{id}")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "SuperAdmin")]
 public async Task<IActionResult> GetById(int id)
 {
     var user = await _userService.GetByIdAsync(id);
@@ -48,14 +48,14 @@ public async Task<IActionResult> GetById(int id)
     return Ok(user);
 }
 [HttpGet("role/{roleId}")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "SuperAdmin")]
 public async Task<IActionResult> GetByRole(int roleId)
 {
     var users = await _userService.GetByRoleIdAsync(roleId);
     return Ok(users);
 }
 [HttpGet("gender/{gender}")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "SuperAdmin")]
 public async Task<IActionResult> GetByGender(string gender)
 {
     var users = await _userService.GetByGenderAsync(gender);
@@ -77,7 +77,7 @@ public async Task<IActionResult> Update(int id, UserUpdateDto dto)
 }
 
 [HttpDelete("{id}")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "SuperAdmin")]
 public async Task<IActionResult> Delete(int id)
 {
     var result = await _userService.DeleteUserAsync(id);
