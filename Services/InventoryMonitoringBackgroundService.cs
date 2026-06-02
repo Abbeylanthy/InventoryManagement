@@ -20,7 +20,7 @@ public class InventoryMonitoringBackgroundService : BackgroundService
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
-        _checkIntervalMinutes = Math.Max(1, settings.Value.CheckIntervalMinutes);
+        _checkIntervalMinutes = Math.Max(1, settings.Value.CheckIntervalMinutes); 
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)

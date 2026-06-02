@@ -10,4 +10,6 @@ public class StockHistory
     public string ActionType { get; set; } = string.Empty; // Stock IN or Stock OUT
     public string Note { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public int? PerformedByUserId {get; set;}
+    public User? PerformedByUser { get; set; }
 }

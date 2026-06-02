@@ -20,6 +20,7 @@ public class DataBaseSeeder
 
             "StockIn",
             "StockOut",
+            "StockAdjustment",
             "ViewStockHistory",
 
             "CreateSupplier",

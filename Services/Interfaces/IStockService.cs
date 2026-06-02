@@ -1,11 +1,14 @@
 using InventoryManagement.DTOs.Stock_In;
 using InventoryManagement.DTOs.Stock_Out;
-using InventoryManagement.Entities;
+using InventoryManagement.DTOs.StockAdjustment;
 using InventoryManagement.DTOs.Stock_History;
-namespace InventoryManagement.Services.Interfaces;
-public interface IStockService
+namespace InventoryManagement.Services.Interfaces
 {
-    Task StockIn(StockInDto dto);
-    Task StockOut(StockOutDto dto);
-    Task<IEnumerable<StockHistoryDto>> GetStockHistory(int productId);
+    public interface IStockService
+    {
+        Task StockIn(StockInDto dto, int userId);
+        Task StockOut(StockOutDto dto, int userId);
+        Task AdjustStock(StockAdjustmentDto dto, int userId);
+        Task<IEnumerable<StockHistoryDto>> GetStockHistory(int productId);
+    }
 }

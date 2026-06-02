@@ -15,15 +15,8 @@ public class AppDbContext : DbContext
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
     }
-
-    /// <summary>
     /// DbSet<Category> represents the "Categories" table in the database
-    /// </summary>
     public DbSet<Category> Categories { get; set; } = null!;
-
-    /// <summary>
-    /// DbSet<Product> represents the "Products" table in the database
-    /// </summary>
     public DbSet<Product> Products { get; set; } = null!;
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<EmailVerificationOtp> EmailVerificationOtps { get; set; } = null!;

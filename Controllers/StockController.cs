@@ -2,8 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using InventoryManagement.DTOs.Stock_In;
 using InventoryManagement.DTOs.Stock_Out;
+using InventoryManagement.DTOs.StockAdjustment;
 using InventoryManagement.Services.Interfaces;
 using InventoryManagement.Authorization;
+using System.Security.Claims;
 
 [ApiController]
 [Route("api/stock")]
@@ -11,6 +13,7 @@ using InventoryManagement.Authorization;
 public class StockController : ControllerBase
 {
     private readonly IStockService _stockService;
+
     public StockController(IStockService stockService)
     {
         _stockService = stockService;
@@ -20,21 +23,44 @@ public class StockController : ControllerBase
     [HasPermission("StockIn")]
     public async Task<IActionResult> StockIn(StockInDto dto)
     {
-        await _stockService.StockIn(dto);
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+
+        await _stockService.StockIn(dto, userId);
+
         return Ok("Stock added successfully");
     }
+
     [HttpPost("out")]
     [HasPermission("StockOut")]
     public async Task<IActionResult> StockOut(StockOutDto dto)
     {
-        await _stockService.StockOut(dto);
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+
+        await _stockService.StockOut(dto, userId);
+
         return Ok("Stock removed successfully");
     }
+
+    [HttpPost("adjustment")]
+    [HasPermission("StockAdjustment")]
+    public async Task<IActionResult> AdjustStock(StockAdjustmentDto dto)
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+
+        await _stockService.AdjustStock(dto, userId);
+
+        return Ok(new
+        {
+            success = true,
+            message = "Stock adjusted successfully"
+        });
+    }
+
     [HttpGet("history/{productId}")]
     [HasPermission("ViewStockHistory")]
-public async Task<IActionResult> GetStockHistory(int productId)
-{
-    var history = await _stockService.GetStockHistory(productId);
-    return Ok(history);
-}
+    public async Task<IActionResult> GetStockHistory(int productId)
+    {
+        var history = await _stockService.GetStockHistory(productId);
+        return Ok(history);
+    }
 }

@@ -8,4 +8,5 @@ public class StockHistoryDto
     public string? ActionType { get; set; }
     public string? Note { get; set;}
     public DateTime CreatedAt { get; set; }
+    public string PerformedBy { get; set; } = string.Empty;
 }
