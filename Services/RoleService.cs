@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using InventoryManagement.Data;
 using InventoryManagement.Entities;
 using InventoryManagement.DTOs.Role;
+using InventoryManagement.DTOs.Common;
 using InventoryManagement.Services.Interfaces;
 
 namespace InventoryManagement.Services;
@@ -41,8 +42,7 @@ public class RoleService : IRoleService
         };
     }
 
-    // ---------------- GET ALL ROLES ----------------
-   public async Task<IEnumerable<RoleDto>> GetAllRolesAsync(
+   public async Task<PaginatedResponse<RoleDto>> GetAllRolesAsync(
     string? search = null,
     bool? isActive = null,
     int pageNumber = 1,
@@ -62,19 +62,28 @@ public class RoleService : IRoleService
         query = query.Where(r =>
             r.Name.Contains(search));
     }
-
+    var totalCount = await query.CountAsync();
     var roles = await query
         .OrderByDescending(r => r.Id)
         .Skip((pageNumber - 1) * pageSize)
         .Take(pageSize)
         .ToListAsync();
 
-    return roles.Select(r => new RoleDto
-    {
-        Id = r.Id,
-        Name = r.Name,
-        IsActive = r.IsActive
-    });
+    var items = roles.Select(r => new RoleDto
+{
+    Id = r.Id,
+    Name = r.Name,
+    IsActive = r.IsActive
+}).ToList();
+
+return new PaginatedResponse<RoleDto>
+{
+    Items = items,
+    PageNumber = pageNumber,
+    PageSize = pageSize,
+    TotalCount = totalCount,
+    TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+};
 }
 
     // ---------------- GET ROLE BY ID ----------------

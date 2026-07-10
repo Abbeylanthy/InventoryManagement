@@ -4,6 +4,7 @@ using InventoryManagement.DTOs.Permission;
 using InventoryManagement.Entities;
 using InventoryManagement.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using InventoryManagement.DTOs.Common;
 
 namespace InventoryManagement.Services;
 
@@ -45,7 +46,7 @@ public class PermissionService : IPermissionService
         return _mapper.Map<PermissionDto>(permission); 
     }
 
-   public async Task<IEnumerable<PermissionDto>> GetAllPermissionsAsync(
+   public async Task<PaginatedResponse<PermissionDto>> GetAllPermissionsAsync(
     string? search = null,
     bool? isActive = null,
     int pageNumber = 1,
@@ -66,14 +67,28 @@ public class PermissionService : IPermissionService
             p.Name.Contains(search) ||
             (p.Name != null && p.Name.Contains(search)));
     }
-
+    var totalCount = await query.CountAsync();
     var permissions = await query
         .OrderByDescending(p => p.Id)
         .Skip((pageNumber - 1) * pageSize)
         .Take(pageSize)
         .ToListAsync();
 
-    return _mapper.Map<IEnumerable<PermissionDto>>(permissions);
+    var items = permissions.Select(p => new PermissionDto
+{
+    Id = p.Id,
+    Name = p.Name,
+    IsActive = p.IsActive
+}).ToList();
+
+return new PaginatedResponse<PermissionDto>
+{
+    Items = items,
+    PageNumber = pageNumber,
+    PageSize = pageSize,
+    TotalCount = totalCount,
+    TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+};
 }
 
     public async Task<PermissionDto?> GetPermissionByIdAsync(int id)

@@ -1,10 +1,11 @@
 using InventoryManagement.DTOs.Role;
+using InventoryManagement.DTOs.Common;
 
 namespace InventoryManagement.Services.Interfaces;
 public interface IRoleService
 {
     Task<RoleDto> CreateRoleAsync(CreateRoleDto dto);
-    Task<IEnumerable<RoleDto>> GetAllRolesAsync(
+    Task<PaginatedResponse<RoleDto>> GetAllRolesAsync(
     string? search = null,
     bool? isActive = null,
     int pageNumber = 1,
