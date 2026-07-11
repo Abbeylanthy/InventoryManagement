@@ -131,40 +131,20 @@ return new PaginatedResponse<RoleDto>
         return true;
     }
 
-    public async Task<bool> ActivateRoleAsync(int id)
+   public async Task<bool> ToggleRoleStatusAsync(int id)
 {
     var role = await _context.Roles.FindAsync(id);
 
     if (role == null)
         return false;
 
-    role.IsActive = true;
+    role.IsActive = !role.IsActive;
 
     await _context.SaveChangesAsync();
+
     return true;
 }
 
-    // ---------------- DEACTIVATE ROLE ----------------
-   public async Task<bool> DeactivateRoleAsync(int id)
-{
-    var role = await _context.Roles.FindAsync(id);
-
-    if (role == null)
-        return false;
-
-    var isAssignedToUser = await _context.UserRoles
-        .AnyAsync(ur => ur.RoleId == id);
-
-    if (isAssignedToUser)
-        throw new InvalidOperationException(
-            "Role is still assigned to one or more users"
-        );
-
-    role.IsActive = false;
-
-    await _context.SaveChangesAsync();
-    return true;
-}
     public async Task<bool> AssignRoleToUsersAsync(AssignRoleDto dto)
 {
     var role = await _context.Roles.FindAsync(dto.RoleId);

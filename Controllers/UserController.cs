@@ -112,5 +112,20 @@ public async Task<IActionResult> Deactivate(int id)
 
     return Ok("User deactivated successfully");
 }
+
+[HttpPut("toggle-status/{id}")]
+[Authorize(Roles = "SuperAdmin")]
+public async Task<IActionResult> ToggleStatus(int id)
+{
+    var result = await _userService.ToggleUserStatusAsync(id);
+
+    if (!result)
+        return NotFound();
+
+    return Ok(new
+    {
+        message = "User status updated successfully."
+    });
+}
 }
     

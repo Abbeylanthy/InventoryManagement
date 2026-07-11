@@ -104,10 +104,12 @@ public class UserService : IUserService
         .Take(pageSize)
         .ToListAsync();
 
-   var items = users.Select(u => new UserDto
+   var items = users.Select(u => new UserDto 
 {
     Id = u.Id,
     UserName = u.UserName,
+    IsActive = u.IsActive,
+    EmailVerified = u.EmailVerified,
 
     Roles = u.UserRoles
         .Select(r => new RoleMinDto
@@ -144,6 +146,8 @@ return new PaginatedResponse<UserDto>
     {
         Id = user.Id,
         UserName = user.UserName,
+        IsActive = user.IsActive,
+        EmailVerified = user.EmailVerified,
 
         Roles = user.UserRoles
             .Select(r => new RoleMinDto
@@ -262,6 +266,24 @@ return new PaginatedResponse<UserDto>
             return false;
 
         user.IsActive = false;
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
+
+    public async Task<bool>ToggleUserStatusAsync(int id)
+    {
+        var user = await _context.Users.FindAsync(id);
+
+        if (user == null)
+            return false;
+
+            if(!user.IsActive && !user.EmailVerified)
+            {
+                throw new Exception("User cannot be activated because the email has not been verified.");
+            }
+
+        user.IsActive = !user.IsActive;
         await _context.SaveChangesAsync();
 
         return true;

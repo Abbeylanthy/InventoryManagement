@@ -5,5 +5,7 @@ public class UserDto
 {
     public int Id { get; set; }
     public string? UserName { get; set; }
+    public bool EmailVerified { get; set; }
+    public bool IsActive { get; set; }
     public List<RoleMinDto> Roles { get; set; } = new();
 }

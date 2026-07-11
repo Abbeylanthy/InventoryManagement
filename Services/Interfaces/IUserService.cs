@@ -15,4 +15,5 @@ public interface IUserService
 
     Task<bool> DeleteUserAsync(int userId);
     Task<bool> DeactivateAccountAsync(int userId);
+    Task<bool> ToggleUserStatusAsync(int id);
 }

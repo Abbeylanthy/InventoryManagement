@@ -81,28 +81,20 @@ public async Task<IActionResult> UpdateRole(int id, [FromBody] CreateRoleDto dto
 }
 
 [Authorize(Roles = "SuperAdmin")]
-[HttpPut("activate/{id}")]
-public async Task<IActionResult> ActivateRole(int id)
+[HttpPut("toggle-status/{id}")]
+public async Task<IActionResult> ToggleStatus(int id)
 {
-    var result = await _roleService.ActivateRoleAsync(id);
+    var result = await _roleService.ToggleRoleStatusAsync(id);
 
     if (!result)
         return NotFound();
 
-    return Ok("Role activated successfully");
+    return Ok(new
+    {
+        message = "Role status updated successfully."
+    });
 }
 
-[Authorize(Roles = "SuperAdmin")]
-[HttpPut("deactivate/{id}")]
-public async Task<IActionResult> DeactivateRole(int id)
-{
-    var result = await _roleService.DeactivateRoleAsync(id);
-
-    if (!result)
-        return NotFound();
-
-    return Ok("Role deactivated successfully");
-}
 [Authorize(Roles = "SuperAdmin")]
 [HttpPost("assign-role-to-users")]
 public async Task<IActionResult> AssignRoleToUsers(  AssignRoleDto dto)
