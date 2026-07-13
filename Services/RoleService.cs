@@ -3,6 +3,7 @@ using InventoryManagement.Data;
 using InventoryManagement.Entities;
 using InventoryManagement.DTOs.Role;
 using InventoryManagement.DTOs.Common;
+using InventoryManagement.DTOs.Permission;
 using InventoryManagement.Services.Interfaces;
 
 namespace InventoryManagement.Services;
@@ -91,19 +92,31 @@ return new PaginatedResponse<RoleDto>
 }
 
     // ---------------- GET ROLE BY ID ----------------
-    public async Task<RoleDto?> GetRoleByIdAsync(int id)
+   public async Task<RoleDetailsDto?> GetRoleByIdAsync(int id)
+{
+    var role = await _context.Roles
+        .Include(r => r.RolePermissions)
+        .ThenInclude(rp => rp.Permission)
+        .FirstOrDefaultAsync(r => r.Id == id);
+
+    if (role == null)
+        return null;
+
+    return new RoleDetailsDto
     {
-        var role = await _context.Roles.FindAsync(id);
+        Id = role.Id,
+        Name = role.Name,
+        IsActive = role.IsActive,
 
-        if (role == null) return null;
-
-        return new RoleDto
-        {
-            Id = role.Id,
-            Name = role.Name,
-            IsActive = role.IsActive
-        };
-    }
+        Permissions = role.RolePermissions
+            .Select(rp => new PermissionMinDto
+            {
+                Id = rp.Permission.Id,
+                Name = rp.Permission.Name
+            })
+            .ToList()
+    };
+}
 
     // ---------------- GET ROLE BY NAME ----------------
     public async Task<RoleDto?> GetRoleByNameAsync(string name)

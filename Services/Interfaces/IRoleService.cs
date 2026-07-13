@@ -10,7 +10,7 @@ public interface IRoleService
     bool? isActive = null,
     int pageNumber = 1,
     int pageSize = 10);
-    Task<RoleDto?> GetRoleByIdAsync(int id);
+    Task<RoleDetailsDto?> GetRoleByIdAsync(int id);
     Task<RoleDto?> GetRoleByNameAsync(string name);
     Task<bool> UpdateRoleAsync(int id, CreateRoleDto dto);
     Task<bool> ToggleRoleStatusAsync(int id);
