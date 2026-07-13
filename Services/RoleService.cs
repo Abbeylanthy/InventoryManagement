@@ -145,17 +145,26 @@ return new PaginatedResponse<RoleDto>
     return true;
 }
 
-    public async Task<bool> AssignRoleToUsersAsync(AssignRoleDto dto)
+   public async Task<RoleAssignmentResultDto> AssignRoleToUsersAsync(AssignRoleDto dto)
 {
     var role = await _context.Roles.FindAsync(dto.RoleId);
 
     if (role == null || !role.IsActive)
-        return false;
+    {
+        return new RoleAssignmentResultDto
+        {
+            Success = false,
+            Message = "Role not found or is inactive."
+        };
+    }
 
     var users = await _context.Users
         .Include(u => u.UserRoles)
         .Where(u => dto.UserIds.Contains(u.Id))
         .ToListAsync();
+
+    var assignedUsers = new List<string>();
+    var skippedUsers = new List<string>();
 
     foreach (var user in users)
     {
@@ -169,21 +178,55 @@ return new PaginatedResponse<RoleDto>
                 UserId = user.Id,
                 RoleId = dto.RoleId
             });
+
+            assignedUsers.Add(user.UserName);
+        }
+        else
+        {
+            skippedUsers.Add(user.UserName);
         }
     }
 
     await _context.SaveChangesAsync();
 
-    return true;
+    string message;
+
+    if (assignedUsers.Any() && skippedUsers.Any())
+    {
+        message =
+            $"Role assigned to {assignedUsers.Count} user(s). " +
+            $"{skippedUsers.Count} user(s) already have this role.";
+    }
+    else if (assignedUsers.Any())
+    {
+        message =
+            $"Role assigned successfully to {assignedUsers.Count} user(s).";
+    }
+    else
+    {
+        message =
+            "All selected users already have this role.";
+    }
+
+    return new RoleAssignmentResultDto
+    {
+        Success = true,
+        ProcessedUsers = assignedUsers,
+        SkippedUsers = skippedUsers,
+        Message = message
+    };
 }
 
     // ---------------- REMOVE ROLE FROM USER ----------------
-    public async Task<bool> RemoveRoleFromUsersAsync(AssignRoleDto dto)
+   public async Task<RoleAssignmentResultDto> RemoveRoleFromUsersAsync(AssignRoleDto dto)
 {
     var users = await _context.Users
         .Include(u => u.UserRoles)
         .Where(u => dto.UserIds.Contains(u.Id))
         .ToListAsync();
+
+    var removedUsers = new List<string>();
+    var skippedUsers = new List<string>();
 
     foreach (var user in users)
     {
@@ -193,11 +236,41 @@ return new PaginatedResponse<RoleDto>
         if (userRole != null)
         {
             user.UserRoles.Remove(userRole);
+            removedUsers.Add(user.UserName);
+        }
+        else
+        {
+            skippedUsers.Add(user.UserName);
         }
     }
 
     await _context.SaveChangesAsync();
 
-    return true;
+    string message;
+
+    if (removedUsers.Any() && skippedUsers.Any())
+    {
+        message =
+            $"Role removed from {removedUsers.Count} user(s). " +
+            $"{skippedUsers.Count} user(s) already did not have this role.";
+    }
+    else if (removedUsers.Any())
+    {
+        message =
+            $"Role removed successfully from {removedUsers.Count} user(s).";
+    }
+    else
+    {
+        message =
+            "None of the selected users currently have this role.";
+    }
+
+    return new RoleAssignmentResultDto
+    {
+        Success = true,
+        ProcessedUsers = removedUsers,
+        SkippedUsers = skippedUsers,
+        Message = message
+    };
 }
 }

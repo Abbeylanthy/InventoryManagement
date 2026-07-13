@@ -101,11 +101,7 @@ public async Task<IActionResult> AssignRoleToUsers(  AssignRoleDto dto)
 {
     var result = await _roleService
         .AssignRoleToUsersAsync(dto);
-
-    if (!result)
-        return BadRequest("Role assignment failed");
-
-    return Ok("Role assigned successfully");
+    return Ok(result);
 }
 [Authorize(Roles = "SuperAdmin")]
 [HttpPost("remove-role")]
@@ -114,11 +110,7 @@ public async Task<IActionResult> RemoveRoleFromUsers(
 {
     var result = await _roleService
         .RemoveRoleFromUsersAsync(dto);
-
-    if (!result)
-        return BadRequest("Failed to remove role");
-
-    return Ok("Role removed successfully");
+    return Ok(result);
 }
 
 }

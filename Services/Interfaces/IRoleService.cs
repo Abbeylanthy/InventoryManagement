@@ -14,7 +14,7 @@ public interface IRoleService
     Task<RoleDto?> GetRoleByNameAsync(string name);
     Task<bool> UpdateRoleAsync(int id, CreateRoleDto dto);
     Task<bool> ToggleRoleStatusAsync(int id);
-    Task<bool> AssignRoleToUsersAsync(AssignRoleDto dto);
-    Task<bool> RemoveRoleFromUsersAsync(AssignRoleDto dto);
+    Task<RoleAssignmentResultDto> AssignRoleToUsersAsync(AssignRoleDto dto);
+    Task<RoleAssignmentResultDto> RemoveRoleFromUsersAsync(AssignRoleDto dto);
     
 }
