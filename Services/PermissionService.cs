@@ -23,6 +23,10 @@ public class PermissionService : IPermissionService
 
     public async Task<PermissionDto> CreatePermissionAsync(CreatePermissionDto dto)
     {
+         if (string.IsNullOrWhiteSpace(dto.Name))
+        {
+            throw new InvalidOperationException("Permission name is required");
+        }
         var exists = await _context.Permissions
             .AnyAsync(p => p.Name == dto.Name); 
 

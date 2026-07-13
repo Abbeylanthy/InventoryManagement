@@ -19,6 +19,10 @@ public class RoleService : IRoleService
     // ---------------- CREATE ROLE ----------------
     public async Task<RoleDto> CreateRoleAsync(CreateRoleDto dto)
     {
+        if (string.IsNullOrWhiteSpace(dto.Name))
+        {
+            throw new InvalidOperationException("Role name is required");
+        }
         var exists = await _context.Roles
             .AnyAsync(r => r.Name == dto.Name);
 
