@@ -9,7 +9,7 @@ using InventoryManagement.DTOs.Common;
         Task StockIn(StockInDto dto, int userId);
         Task StockOut(StockOutDto dto, int userId);
         Task AdjustStock(StockAdjustmentDto dto, int userId);
-        Task<IEnumerable<StockHistoryDto>> GetStockHistory(
+        Task<PaginatedResponse<StockHistoryDto>> GetStockHistory(
     int productId,
     int pageNumber = 1,
     int pageSize = 10);

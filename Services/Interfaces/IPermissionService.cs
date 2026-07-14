@@ -5,7 +5,7 @@ public interface IPermissionService
 {
     Task<PermissionDto> CreatePermissionAsync(CreatePermissionDto dto);
     Task<PaginatedResponse<PermissionDto>> GetAllPermissionsAsync(string? search = null, bool? isActive = null, int pageNumber = 1, int pageSize = 10);
-    Task<PermissionDto?> GetPermissionByIdAsync(int id);
+    Task<PermissionDetailsDto?> GetPermissionByIdAsync(int id);
     Task<bool> DeactivatePermissionAsync(int id);
     Task<bool> ActivatePermissionAsync(int id);
     Task<bool> UpdatePermissionAsync(int id, CreatePermissionDto dto);

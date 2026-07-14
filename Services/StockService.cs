@@ -119,20 +119,24 @@ public class StockService : IStockService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<StockHistoryDto>> GetStockHistory(
+   public async Task<PaginatedResponse<StockHistoryDto>> GetStockHistory(
     int productId,
     int pageNumber = 1,
     int pageSize = 10)
 {
-    var history = await _context.StockHistories
+    var query = _context.StockHistories
         .Include(x => x.PerformedByUser)
         .Where(x => x.ProductId == productId)
-        .OrderByDescending(x => x.CreatedAt)
+        .OrderByDescending(x => x.CreatedAt);
+
+    var totalCount = await query.CountAsync();
+
+    var history = await query
         .Skip((pageNumber - 1) * pageSize)
         .Take(pageSize)
         .ToListAsync();
 
-    return history.Select(x => new StockHistoryDto
+    var items = history.Select(x => new StockHistoryDto
     {
         ProductId = x.ProductId,
         QuantityChanged = x.QuantityChanged,
@@ -145,6 +149,15 @@ public class StockService : IStockService
             ? x.PerformedByUser.UserName
             : "System"
     });
+
+    return new PaginatedResponse<StockHistoryDto>
+    {
+        Items = items,
+        PageNumber = pageNumber,
+        PageSize = pageSize,
+        TotalCount = totalCount,
+        TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+    };
 }
 
    public async Task<PaginatedResponse<StockHistoryDto>> GetAllStockHistory(

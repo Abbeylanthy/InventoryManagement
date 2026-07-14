@@ -5,6 +5,7 @@ using InventoryManagement.Entities;
 using InventoryManagement.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using InventoryManagement.DTOs.Common;
+using InventoryManagement.DTOs.Role;
 
 namespace InventoryManagement.Services;
 
@@ -43,9 +44,9 @@ public class PermissionService : IPermissionService
             IsActive = true
         };
 
-        _context.Permissions.Add(permission);
+        _context.Permissions.Add(permission); 
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(); 
 
         return _mapper.Map<PermissionDto>(permission); 
     }
@@ -95,15 +96,31 @@ return new PaginatedResponse<PermissionDto>
 };
 }
 
-    public async Task<PermissionDto?> GetPermissionByIdAsync(int id)
-    {
-        var permission = await _context.Permissions
-            .FirstOrDefaultAsync(p => p.Id == id);
+   public async Task<PermissionDetailsDto?> GetPermissionByIdAsync(int id)
+{
+    var permission = await _context.Permissions
+        .Include(p => p.RolePermissions)
+        .ThenInclude(rp => rp.Role)
+        .FirstOrDefaultAsync(p => p.Id == id);
 
-        return permission == null 
-            ? null 
-            : _mapper.Map<PermissionDto>(permission); 
-    }
+    if (permission == null)
+        return null;
+
+    return new PermissionDetailsDto
+    {
+        Id = permission.Id,
+        Name = permission.Name,
+        IsActive = permission.IsActive,
+
+        Roles = permission.RolePermissions
+            .Select(rp => new RoleMinDto
+            {
+                Id = rp.Role.Id,
+                Name = rp.Role.Name
+            })
+            .ToList()
+    };
+}
 
     public async Task<bool> ActivatePermissionAsync(int id)
 {

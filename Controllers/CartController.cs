@@ -47,9 +47,12 @@ public class CartController : ControllerBase
 
     [HttpGet("all")]
     [HasPermission("GetAllCarts")]
-   public async Task<IActionResult> GetAllCarts()
+   public async Task<IActionResult> GetAllCarts(
+    [FromQuery] int pageNumber = 1,
+    [FromQuery] int pageSize = 10
+   )
    {
-    var carts = await _cartService.GetAllCarts();
+    var carts = await _cartService.GetAllCarts(pageNumber, pageSize);
 
     return Ok(carts);
    }

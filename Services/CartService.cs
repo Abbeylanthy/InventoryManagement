@@ -3,6 +3,7 @@ using InventoryManagement.Data;
 using InventoryManagement.DTOs.Cart;
 using InventoryManagement.Entities;
 using InventoryManagement.Services.Interfaces;
+using InventoryManagement.DTOs.Common;
 
 namespace InventoryManagement.Services;
 
@@ -113,31 +114,41 @@ public class CartService : ICartService
     };
 }
 
-public async Task<List<CartAdminDto>> GetAllCarts()
+public async Task<PaginatedResponse<CartAdminDto>> GetAllCarts(
+    int pageNumber =1,
+    int pageSize = 10)
 {
-    var carts = await _context.Carts
+    var query = _context.Carts
         .Include(c => c.Customer)
         .Include(c => c.Items)
             .ThenInclude(i => i.Product)
-        .OrderByDescending(c => c.CreatedAt)
+        .OrderByDescending(c => c.CreatedAt);
+
+    var totalCount = await query.CountAsync();
+
+    var carts = await query
+        .Skip((pageNumber - 1) * pageSize)
+        .Take(pageSize)
         .ToListAsync();
 
-    return carts.Select(c => new CartAdminDto
+    var items = carts.Select(c => new CartAdminDto
     {
         CartId = c.Id,
-
         CustomerId = c.CustomerId,
-
-        CustomerName =
-            c.Customer.FirstName + " " + c.Customer.LastName,
-
+        CustomerName = $"{c.Customer.FirstName} {c.Customer.LastName}",
         CustomerEmail = c.Customer.Email,
-
         CreatedAt = c.CreatedAt,
+        GrandTotal = c.Items.Sum(i => i.Quantity * i.Product.Price)
+    });
 
-        GrandTotal = c.Items.Sum(i =>
-            i.Quantity * i.Product.Price)
-    }).ToList();
+    return new PaginatedResponse<CartAdminDto>
+    {
+        Items = items,
+        PageNumber = pageNumber,
+        PageSize = pageSize,
+        TotalCount = totalCount,
+        TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+    };
 }
 
 public async Task<CartAdminDetailsDto?> GetCartById(int cartId)
