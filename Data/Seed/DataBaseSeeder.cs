@@ -37,6 +37,7 @@ public class DataBaseSeeder
 
             "GetAllOrders",
             "GetPaidOrders",
+            "CancelOrder",
             "UpdateOrderStatus",
             "GetDashboardSummary",
 

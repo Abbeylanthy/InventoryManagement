@@ -13,5 +13,6 @@ public interface IOrderService
     Task<OrderResponseDto?> GetOrderDetails(int orderId, int customerId, bool isCustomer);
     Task UpdateOrderStatus(int orderId, OrderStatus newStatus);
     Task CancelOrder(int orderId, int customerId);
+    Task AdminCancelOrder (int orderId);
     Task<OrderDashboardSummaryDto> GetDashboardSummary();
 }

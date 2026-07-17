@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using InventoryManagement.Entities;
 using InventoryManagement.Data;
 using InventoryManagement.DTOs.Payment;
+using InventoryManagement.DTOs.Common;
 using InventoryManagement.Services.Interfaces;
 using InventoryManagement.Enum;
 using Microsoft.Extensions.Options;
@@ -25,7 +26,7 @@ public class PaymentService : IPaymentService
         _notificationService = notificationService;
     }
 
-   public async Task<List<PaymentAdminResponseDto>> GetAllPayments(
+   public async Task<PaginatedResponse<PaymentAdminResponseDto>> GetAllPayments(
     string? search = null,
     string? status = null,
     int pageNumber = 1,
@@ -53,27 +54,37 @@ public class PaymentService : IPaymentService
         query = query.Where(p => p.Status == status);
     }
 
+    var totalCount = await query.CountAsync();
     var payments = await query
         .OrderByDescending(p => p.CreatedAt)
         .Skip((pageNumber - 1) * pageSize)
         .Take(pageSize)
         .ToListAsync();
 
-    return payments.Select(p => new PaymentAdminResponseDto
-    {
-        Id = p.Id,
-        OrderId = p.OrderId,
-        CustomerName = $"{p.Order.Customer.FirstName} {p.Order.Customer.LastName}",
-        CustomerEmail = p.Order.Customer.Email,
-        Amount = p.Amount,
-        Reference = p.Reference,
-        Status = p.Status,
-        CreatedAt = p.CreatedAt,
-        PaidAt = p.PaidAt
-    }).ToList();
+  var items = payments.Select(p => new PaymentAdminResponseDto
+{
+    Id = p.Id,
+    OrderId = p.OrderId,
+    CustomerName = $"{p.Order.Customer.FirstName} {p.Order.Customer.LastName}",
+    CustomerEmail = p.Order.Customer.Email,
+    Amount = p.Amount,
+    Reference = p.Reference,
+    Status = p.Status,
+    CreatedAt = p.CreatedAt,
+    PaidAt = p.PaidAt
+}).ToList();
+
+return new PaginatedResponse<PaymentAdminResponseDto>
+{
+    Items = items,
+    PageNumber = pageNumber,
+    PageSize = pageSize,
+    TotalCount = totalCount,
+    TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+};
 }
 
-public async Task<List<PaymentAdminResponseDto>> GetSuccessfulPayments(
+public async Task<PaginatedResponse<PaymentAdminResponseDto>> GetSuccessfulPayments(
     string? search = null,
     int pageNumber = 1,
     int pageSize = 10)
@@ -93,27 +104,37 @@ public async Task<List<PaymentAdminResponseDto>> GetSuccessfulPayments(
             p.Order.Customer.Email.Contains(search));
     }
 
+    var totalCount = await query.CountAsync();
     var payments = await query
         .OrderByDescending(p => p.PaidAt)
         .Skip((pageNumber - 1) * pageSize)
         .Take(pageSize)
         .ToListAsync();
 
-    return payments.Select(p => new PaymentAdminResponseDto
-    {
-        Id = p.Id,
-        OrderId = p.OrderId,
-        CustomerName = $"{p.Order.Customer.FirstName} {p.Order.Customer.LastName}",
-        CustomerEmail = p.Order.Customer.Email,
-        Amount = p.Amount,
-        Reference = p.Reference,
-        Status = p.Status,
-        CreatedAt = p.CreatedAt,
-        PaidAt = p.PaidAt
-    }).ToList();
+   var items = payments.Select(p => new PaymentAdminResponseDto
+{
+    Id = p.Id,
+    OrderId = p.OrderId,
+    CustomerName = $"{p.Order.Customer.FirstName} {p.Order.Customer.LastName}",
+    CustomerEmail = p.Order.Customer.Email,
+    Amount = p.Amount,
+    Reference = p.Reference,
+    Status = p.Status,
+    CreatedAt = p.CreatedAt,
+    PaidAt = p.PaidAt
+}).ToList();
+
+return new PaginatedResponse<PaymentAdminResponseDto>
+{
+    Items = items,
+    PageNumber = pageNumber,
+    PageSize = pageSize,
+    TotalCount = totalCount,
+    TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+};
 }
 
-public async Task<List<PaymentAdminResponseDto>> GetPendingPayments(
+public async Task<PaginatedResponse<PaymentAdminResponseDto>> GetPendingPayments(
     string? search = null,
     int pageNumber = 1,
     int pageSize = 10)
@@ -133,24 +154,34 @@ public async Task<List<PaymentAdminResponseDto>> GetPendingPayments(
             p.Order.Customer.Email.Contains(search));
     }
 
+    var totalCount = await query.CountAsync();
     var payments = await query
         .OrderByDescending(p => p.CreatedAt)
         .Skip((pageNumber - 1) * pageSize)
         .Take(pageSize)
         .ToListAsync();
 
-    return payments.Select(p => new PaymentAdminResponseDto
-    {
-        Id = p.Id,
-        OrderId = p.OrderId,
-        CustomerName = $"{p.Order.Customer.FirstName} {p.Order.Customer.LastName}",
-        CustomerEmail = p.Order.Customer.Email,
-        Amount = p.Amount,
-        Reference = p.Reference,
-        Status = p.Status,
-        CreatedAt = p.CreatedAt,
-        PaidAt = p.PaidAt
-    }).ToList();
+   var items = payments.Select(p => new PaymentAdminResponseDto
+{
+    Id = p.Id,
+    OrderId = p.OrderId,
+    CustomerName = $"{p.Order.Customer.FirstName} {p.Order.Customer.LastName}",
+    CustomerEmail = p.Order.Customer.Email,
+    Amount = p.Amount,
+    Reference = p.Reference,
+    Status = p.Status,
+    CreatedAt = p.CreatedAt,
+    PaidAt = p.PaidAt
+}).ToList();
+
+return new PaginatedResponse<PaymentAdminResponseDto>
+{
+    Items = items,
+    PageNumber = pageNumber,
+    PageSize = pageSize,
+    TotalCount = totalCount,
+    TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+};
 }
 
     public async Task<Payment> CreatePayment(int orderId)

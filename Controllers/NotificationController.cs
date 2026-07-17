@@ -75,4 +75,24 @@ public async Task<IActionResult> GetNotificationById(int id)
         await _notificationService.MarkAsRead(id);
         return Ok("Marked as read");
     }
+
+    [HttpGet("unread-count")]
+public async Task<IActionResult> GetUnreadCount()
+{
+    var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+    var count = await _notificationService.GetUnreadCount(userId);
+
+    return Ok(new { count });
+}
+
+[HttpPut("read-all")]
+public async Task<IActionResult> MarkAllAsRead()
+{
+    var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+    await _notificationService.MarkAllAsRead(userId);
+
+    return Ok("All notifications marked as read.");
+}
 }

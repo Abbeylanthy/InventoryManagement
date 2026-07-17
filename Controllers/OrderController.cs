@@ -113,4 +113,15 @@ public async Task<IActionResult> CancelOrder(int orderId)
 
     return Ok("Order cancelled successfully");
 }
+
+[HttpPut("{orderId}/admin-cancel")]
+[HasPermission("CancelOrder")]
+public async Task<IActionResult> AdminCancelOrder(int orderId)
+{
+    await _orderService.AdminCancelOrder(orderId);
+
+    return Ok("Order cancelled successfully.");
+}
+
+
 }

@@ -277,6 +277,24 @@ return new PaginatedResponse<OrderAdminResponseDto>
     if (order.Status == OrderStatus.Cancelled)
         throw new Exception("Order already cancelled");
 
+        // Payment is handled ONLY by PaymentService
+if (newStatus == OrderStatus.Paid)
+    throw new Exception(
+        "Orders can only be marked as paid after successful payment verification."
+    );
+
+// Cancellation is a separate workflow
+if (newStatus == OrderStatus.Cancelled)
+    throw new Exception(
+        "Use the Cancel Order operation instead."
+    );
+
+// Refunded is handled during cancellation
+if (newStatus == OrderStatus.Refunded)
+    throw new Exception(
+        "Refunds are handled through the cancellation process."
+    );
+
     // CASE 1: PAY
     if (newStatus == OrderStatus.Paid)
     {
@@ -436,5 +454,16 @@ return new PaginatedResponse<OrderAdminResponseDto>
     }
 
     await _context.SaveChangesAsync();
+}
+
+public async Task AdminCancelOrder(int orderId)
+{
+    var order = await _context.Orders
+        .FirstOrDefaultAsync(o => o.Id == orderId);
+
+    if (order == null)
+        throw new Exception("Order not found");
+
+    await CancelOrder(orderId, order.CustomerId);
 }
 }

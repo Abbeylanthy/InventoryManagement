@@ -18,7 +18,6 @@ public class PaymentController : ControllerBase
 
     [HttpGet]
 [HasPermission("ViewPayments")]
-
 public async Task<IActionResult> GetPayments(
     [FromQuery] string? search,
     [FromQuery] string? status,
@@ -51,7 +50,6 @@ public async Task<IActionResult> GetSuccessfulPayments(
 
 [HttpGet("pending")]
 [HasPermission("ViewPayments")]
-
 public async Task<IActionResult> GetPendingPayments(
     [FromQuery] string? search,
     [FromQuery] int pageNumber = 1,

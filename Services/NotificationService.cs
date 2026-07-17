@@ -3,6 +3,7 @@ using InventoryManagement.Entities;
 using InventoryManagement.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using InventoryManagement.DTOs.Notification;
+using InventoryManagement.DTOs.Common;
 
 public class NotificationService : INotificationService
 {
@@ -27,7 +28,7 @@ public class NotificationService : INotificationService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<List<NotificationResponseDto>> GetUserNotifications(
+   public async Task<PaginatedResponse<NotificationResponseDto>> GetUserNotifications(
     int userId,
     string? search = null,
     int pageNumber = 1,
@@ -45,7 +46,9 @@ public class NotificationService : INotificationService
 
     query = query.OrderByDescending(n => n.CreatedAt);
 
-    return await query
+    var totalCount = await query.CountAsync();
+
+    var notifications = await query
         .Skip((pageNumber - 1) * pageSize)
         .Take(pageSize)
         .Select(n => new NotificationResponseDto
@@ -58,8 +61,17 @@ public class NotificationService : INotificationService
             CreatedAt = n.CreatedAt
         })
         .ToListAsync();
+
+    return new PaginatedResponse<NotificationResponseDto>
+    {
+        Items = notifications,
+        PageNumber = pageNumber,
+        PageSize = pageSize,
+        TotalCount = totalCount,
+        TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+    };
 }
-    public async Task<List<NotificationResponseDto>> GetAllNotifications(
+    public async Task<PaginatedResponse<NotificationResponseDto>> GetAllNotifications(
     string? search = null,
     bool? isRead = null,
     int pageNumber = 1,
@@ -85,21 +97,30 @@ public class NotificationService : INotificationService
 
     query = query.OrderByDescending(n => n.CreatedAt);
 
-    return await query
-        .Skip((pageNumber - 1) * pageSize)
-        .Take(pageSize)
-        .Select(n => new NotificationResponseDto
+   var totalCount = await query.CountAsync();
+
+var notifications = await query
+    .Skip((pageNumber - 1) * pageSize)
+    .Take(pageSize)
+     .Select(n => new NotificationResponseDto
         {
             Id = n.Id,
             UserId = n.UserId,
-            UserName = n.User.FirstName + " " + n.User.LastName,
-            UserEmail = n.User.Email,
             Message = n.Message,
             Type = n.Type,
             IsRead = n.IsRead,
             CreatedAt = n.CreatedAt
         })
-        .ToListAsync();
+    .ToListAsync();
+
+return new PaginatedResponse<NotificationResponseDto>
+{
+    Items = notifications,
+    PageNumber = pageNumber,
+    PageSize = pageSize,
+    TotalCount = totalCount,
+    TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+};
 }
 
 public async Task<NotificationResponseDto?> GetNotificationById(int id)
@@ -132,4 +153,24 @@ public async Task<NotificationResponseDto?> GetNotificationById(int id)
 
         await _context.SaveChangesAsync();
     }
+
+    public async Task<int> GetUnreadCount(int userId)
+{
+    return await _context.Notifications
+        .CountAsync(n => n.UserId == userId && !n.IsRead);
+}
+
+public async Task MarkAllAsRead(int userId)
+{
+    var notifications = await _context.Notifications
+        .Where(n => n.UserId == userId && !n.IsRead)
+        .ToListAsync();
+
+    foreach (var notification in notifications)
+    {
+        notification.IsRead = true;
+    }
+
+    await _context.SaveChangesAsync();
+}
 }
