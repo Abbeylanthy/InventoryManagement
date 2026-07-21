@@ -113,10 +113,10 @@ namespace InventoryManagement.Services;
     .ThenInclude(ur => ur.Role)
         .ThenInclude(r => r.RolePermissions)
             .ThenInclude(rp => rp.Permission)
-    .FirstOrDefaultAsync(u => u.UserName == dto.UserName);
+    .FirstOrDefaultAsync(u => u.Email == dto.Email);
 
 if (user == null)
-    throw new InvalidOperationException("Invalid username or password.");
+    throw new InvalidOperationException("Invalid email or password.");
 
 if (!user.EmailVerified)
     throw new InvalidOperationException("Please verify your email before logging in.");
@@ -126,7 +126,7 @@ if (!user.IsActive)
 
 var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash!, dto.Password);
 if (result == PasswordVerificationResult.Failed)
-    throw new InvalidOperationException("Invalid username or password.");
+    throw new InvalidOperationException("Invalid email or password.");
 
     var token = _tokenService.GenerateJwtToken(user);
 

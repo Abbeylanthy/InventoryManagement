@@ -38,13 +38,18 @@ public async Task<IActionResult> CreateFeedback(
 }
 
 [HttpGet("my")]
-public async Task<IActionResult> GetMyFeedback()
+public async Task<IActionResult> GetMyFeedback(
+    [FromQuery] string? search = null,
+    [FromQuery] FeedbackStatus? status = null,
+    [FromQuery] int pageNumber = 1,
+    [FromQuery] int pageSize = 10
+)
 {
     var customerId = int.Parse(
         User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
     var feedback = await _feedbackService
-        .GetMyFeedback(customerId);
+        .GetMyFeedback(customerId, search, status, pageNumber, pageSize);
 
     return Ok(feedback);
 }

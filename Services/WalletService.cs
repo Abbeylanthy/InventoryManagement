@@ -3,6 +3,7 @@ using InventoryManagement.Data;
 using InventoryManagement.Entities;
 using InventoryManagement.Services.Interfaces;
 using InventoryManagement.DTOs.Wallet;
+using InventoryManagement.DTOs.Common;
 using InventoryManagement.Enums;
 using InventoryManagement.DTOs.Withdraw;
 
@@ -43,7 +44,7 @@ public class WalletService : IWalletService
         return wallet;
     }
 
-   public async Task<List<WalletAdminResponseDto>> GetAllWallets(
+  public async Task<PaginatedResponse<WalletAdminResponseDto>> GetAllWallets(
     string? search = null,
     int pageNumber = 1,
     int pageSize = 10)
@@ -60,13 +61,15 @@ public class WalletService : IWalletService
             w.Customer.Email.Contains(search));
     }
 
+    var totalCount = await query.CountAsync();
+
     var wallets = await query
         .OrderByDescending(w => w.CreatedAt)
         .Skip((pageNumber - 1) * pageSize)
         .Take(pageSize)
         .ToListAsync();
 
-    return wallets.Select(w => new WalletAdminResponseDto
+    var items = wallets.Select(w => new WalletAdminResponseDto
     {
         WalletId = w.Id,
         CustomerId = w.CustomerId,
@@ -75,6 +78,15 @@ public class WalletService : IWalletService
         Balance = w.Balance,
         TransactionCount = w.Transactions.Count
     }).ToList();
+
+    return new PaginatedResponse<WalletAdminResponseDto>
+    {
+        Items = items,
+        PageNumber = pageNumber,
+        PageSize = pageSize,
+        TotalCount = totalCount,
+        TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+    };
 }
 
 public async Task<WalletAdminResponseDto?> GetWalletById(int walletId)
@@ -98,7 +110,7 @@ public async Task<WalletAdminResponseDto?> GetWalletById(int walletId)
     };
 }
 
-public async Task<List<WalletTransactionAdminDto>> GetWalletTransactions(
+public async Task<PaginatedResponse<WalletTransactionAdminDto>> GetWalletTransactions(
     int walletId,
     WalletTransactionType? type = null,
     int pageNumber = 1,
@@ -114,13 +126,15 @@ public async Task<List<WalletTransactionAdminDto>> GetWalletTransactions(
         query = query.Where(t => t.Type == type.Value);
     }
 
+    var totalCount = await query.CountAsync();
+
     var transactions = await query
         .OrderByDescending(t => t.CreatedAt)
         .Skip((pageNumber - 1) * pageSize)
         .Take(pageSize)
         .ToListAsync();
 
-    return transactions.Select(t => new WalletTransactionAdminDto
+    var items = transactions.Select(t => new WalletTransactionAdminDto
     {
         Id = t.Id,
         WalletId = t.WalletId,
@@ -132,6 +146,15 @@ public async Task<List<WalletTransactionAdminDto>> GetWalletTransactions(
         Reason = t.Reason,
         CreatedAt = t.CreatedAt
     }).ToList();
+
+    return new PaginatedResponse<WalletTransactionAdminDto>
+    {
+        Items = items,
+        PageNumber = pageNumber,
+        PageSize = pageSize,
+        TotalCount = totalCount,
+        TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+    };
 }
 
     // CREDIT (REFUND / TOPUP)
@@ -261,7 +284,7 @@ foreach (var admin in admins)
     }
 
     // GET WITHDRAWALS
-   public async Task<List<WithdrawalDto>> GetAllWithdrawals(
+   public async Task<PaginatedResponse<WithdrawalDto>> GetAllWithdrawals(
     string? search = null,
     string? status = null,
     int pageNumber = 1,
@@ -271,7 +294,6 @@ foreach (var admin in admins)
         .Include(w => w.Wallet)
         .ThenInclude(w => w.Customer);
 
-    // Search
     if (!string.IsNullOrWhiteSpace(search))
     {
         query = query.Where(w =>
@@ -283,11 +305,12 @@ foreach (var admin in admins)
             w.AccountNumber.Contains(search));
     }
 
-    // Status
     if (!string.IsNullOrWhiteSpace(status))
     {
         query = query.Where(w => w.Status == status);
     }
+
+    var totalCount = await query.CountAsync();
 
     var withdrawals = await query
         .OrderByDescending(w => w.CreatedAt)
@@ -295,7 +318,7 @@ foreach (var admin in admins)
         .Take(pageSize)
         .ToListAsync();
 
-    return withdrawals.Select(w => new WithdrawalDto
+    var items = withdrawals.Select(w => new WithdrawalDto
     {
         Id = w.Id,
         Amount = w.Amount,
@@ -306,5 +329,56 @@ foreach (var admin in admins)
         CreatedAt = w.CreatedAt,
         CustomerName = $"{w.Wallet.Customer.FirstName} {w.Wallet.Customer.LastName}"
     }).ToList();
+
+    return new PaginatedResponse<WithdrawalDto>
+    {
+        Items = items,
+        PageNumber = pageNumber,
+        PageSize = pageSize,
+        TotalCount = totalCount,
+        TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+    };
+}
+
+public async Task<PaginatedResponse<WalletTransactionDto>> GetMyTransactions(
+    int customerId,
+    WalletTransactionType? type = null,
+    int pageNumber = 1,
+    int pageSize = 10)
+{
+    var wallet = await GetWallet(customerId);
+
+    IQueryable<WalletTransaction> query = _context.WalletTransactions
+        .Where(t => t.WalletId == wallet.Id);
+
+    if (type.HasValue)
+    {
+        query = query.Where(t => t.Type == type.Value);
+    }
+
+    var totalCount = await query.CountAsync();
+
+    var transactions = await query
+        .OrderByDescending(t => t.CreatedAt)
+        .Skip((pageNumber - 1) * pageSize)
+        .Take(pageSize)
+        .ToListAsync();
+
+    var items = transactions.Select(t => new WalletTransactionDto
+    {
+        Amount = t.Amount,
+        Reason = t.Reason,
+        Type = t.Type.ToString(),
+        CreatedAt = t.CreatedAt
+    }).ToList();
+
+    return new PaginatedResponse<WalletTransactionDto>
+    {
+        Items = items,
+        PageNumber = pageNumber,
+        PageSize = pageSize,
+        TotalCount = totalCount,
+        TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+    };
 }
 }

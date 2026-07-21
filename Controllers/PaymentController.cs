@@ -66,7 +66,8 @@ public async Task<IActionResult> GetPendingPayments(
     [HttpPost("initialize/{orderId}")]
 public async Task<IActionResult> InitializePayment(int orderId)
 {
-    var response = await _paymentService.InitializePaystackPayment(orderId);
+    var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+    var response = await _paymentService.InitializePaystackPayment(orderId, userId);
 
     return Ok(response);
 }

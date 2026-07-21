@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using InventoryManagement.DTOs.User;
 using InventoryManagement.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace InventoryManagement.Controllers;
 
@@ -61,6 +62,23 @@ public async Task<IActionResult> GetById(int id)
 
     return Ok(user);
 }
+
+[HttpGet("me")]
+[Authorize]
+public async Task<IActionResult> GetCurrentUser()
+{
+    var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+    if (userIdClaim == null)
+        return Unauthorized();
+
+    var userId = int.Parse(userIdClaim.Value);
+
+    var user = await _userService.GetCurrentUserAsync(userId);
+
+    return Ok(user);
+}
+
 [HttpGet("role/{roleId}")]
 [Authorize(Roles = "SuperAdmin")]
 public async Task<IActionResult> GetByRole(int roleId)

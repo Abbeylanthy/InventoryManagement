@@ -131,7 +131,49 @@ return new PaginatedResponse<UserDto>
 };
 }
 
-   public async Task<UserDto> GetByIdAsync(int id)
+public async Task<UserDetailsDto> GetCurrentUserAsync(int userId)
+{
+    var user = await _context.Users
+        .Include(u => u.UserRoles)
+            .ThenInclude(ur => ur.Role)
+                .ThenInclude(r => r.RolePermissions)
+                    .ThenInclude(rp => rp.Permission)
+        .FirstOrDefaultAsync(u => u.Id == userId);
+
+    if (user == null)
+        throw new Exception("User not found.");
+
+    return new UserDetailsDto
+    {
+        Id = user.Id,
+        FirstName = user.FirstName,
+        LastName = user.LastName,
+        UserName = user.UserName,
+        Email = user.Email,
+        DateOfBirth = user.DateOfBirth,
+        Gender = user.Gender,
+        IsActive = user.IsActive,
+        EmailVerified = user.EmailVerified,
+
+        Roles = user.UserRoles
+            .Select(ur => new RoleDetailsDto
+            {
+                Id = ur.Role.Id,
+                Name = ur.Role.Name,
+                IsActive = ur.Role.IsActive,
+
+                Permissions = ur.Role.RolePermissions
+                    .Select(rp => new PermissionMinDto
+                    {
+                        Id = rp.Permission.Id,
+                        Name = rp.Permission.Name
+                    })
+                    .ToList()
+            })
+            .ToList()
+    };
+}
+   public async Task<UserDetailsDto> GetByIdAsync(int id)
 {
     var user = await _context.Users
         .Include(u => u.UserRoles)
@@ -142,29 +184,35 @@ return new PaginatedResponse<UserDto>
 
     if (user == null) return null!;
 
-    return new UserDto
-    {
-        Id = user.Id,
-        UserName = user.UserName,
-        IsActive = user.IsActive,
-        EmailVerified = user.EmailVerified,
+   return new UserDetailsDto
+{
+    Id = user.Id,
+    FirstName = user.FirstName,
+    LastName = user.LastName,
+    UserName = user.UserName,
+    Email = user.Email,
+    DateOfBirth = user.DateOfBirth,
+    Gender = user.Gender,
+    IsActive = user.IsActive,
+    EmailVerified = user.EmailVerified,
 
-        Roles = user.UserRoles
-            .Select(r => new RoleMinDto
-            {
-                Id = r.Role.Id,
-                Name = r.Role.Name,
+    Roles = user.UserRoles
+        .Select(r => new RoleDetailsDto
+        {
+            Id = r.Role.Id,
+            Name = r.Role.Name,
+            IsActive = r.Role.IsActive,
 
-                Permissions = r.Role.RolePermissions
-                    .Select(rp => new PermissionMinDto
-                    {
-                        Id = rp.Permission.Id,
-                        Name = rp.Permission.Name
-                    })
-                    .ToList()
-            })
-            .ToList()
-    };
+            Permissions = r.Role.RolePermissions
+                .Select(rp => new PermissionMinDto
+                {
+                    Id = rp.Permission.Id,
+                    Name = rp.Permission.Name
+                })
+                .ToList()
+        })
+        .ToList()
+};
 }
 
     public async Task<IEnumerable<UserDto>> GetByRoleIdAsync(int roleId)

@@ -8,11 +8,11 @@ public interface IUserService
     string? search = null,
     int pageNumber = 1,
     int pageSize = 10);
-    Task<UserDto> GetByIdAsync(int id);
+    Task<UserDetailsDto> GetByIdAsync(int id);
+    Task<UserDetailsDto> GetCurrentUserAsync(int userId);
     Task<IEnumerable<UserDto>> GetByRoleIdAsync(int roleId);
     Task<IEnumerable<UserDto>> GetByGenderAsync(string gender);
      Task<UserDto> UpdateUserAsync(int id, UserUpdateDto dto);
-
     Task<bool> DeleteUserAsync(int userId);
     Task<bool> DeactivateAccountAsync(int userId);
     Task<bool> ToggleUserStatusAsync(int id);

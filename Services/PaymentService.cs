@@ -231,7 +231,7 @@ if (existingPayment != null)
         return payment;
     }
 
-   public async Task<InitializePaymentResponseDto> InitializePaystackPayment(int orderId)
+   public async Task<InitializePaymentResponseDto> InitializePaystackPayment(int orderId, int userId)
 {
     // 1. Get existing payment
     var payment = await _context.Payments
@@ -289,9 +289,14 @@ if (existingPayment != null)
     var order = await _context.Orders
         .Include(o => o.Customer)
         .FirstOrDefaultAsync(o => o.Id == orderId);
-
     if (order == null)
         throw new Exception("Order not found");
+
+    if (order.CustomerId != userId)
+        {
+            throw new 
+            UnauthorizedAccessException("You can only pay for your own orders.");
+        }
 
     // 6. Call Paystack ONLY HERE (first-time payment)
     var requestBody = new

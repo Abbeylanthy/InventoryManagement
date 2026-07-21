@@ -67,6 +67,15 @@ public async Task<PaginatedResponse<ProductDto>> GetAllAsync(
     .Include(p => p.Category)
     .Include(p => p.Supplier);
 
+    var user = _httpContextAccessor.HttpContext?.User;
+
+bool isAdmin =
+    user != null &&
+    (
+        user.IsInRole("SuperAdmin") ||
+        user.IsInRole("Admin")
+    );
+
     // Search
     if (!string.IsNullOrWhiteSpace(search))
     {
@@ -75,11 +84,19 @@ public async Task<PaginatedResponse<ProductDto>> GetAllAsync(
             (p.Description != null && p.Description.Contains(search)));
     }
 
-    // Active filter
+   // Active filter
+if (isAdmin)
+{
     if (isActive.HasValue)
     {
         query = query.Where(p => p.IsActive == isActive.Value);
     }
+}
+else
+{
+    // Customers always see only active products
+    query = query.Where(p => p.IsActive);
+}
 
     // Sorting
     if (!string.IsNullOrWhiteSpace(sort))
@@ -103,8 +120,6 @@ public async Task<PaginatedResponse<ProductDto>> GetAllAsync(
         .Skip((pageNumber - 1) * pageSize)
         .Take(pageSize)
         .ToListAsync();
-
-    var user = _httpContextAccessor.HttpContext?.User;
 
     bool canSeeThreshold =
         user != null &&

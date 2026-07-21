@@ -37,22 +37,23 @@ public async Task<IActionResult> GetWallet()
 
     var wallet = await _walletService.GetWallet(userId);
 
-    var result = new WalletResponseDto
-    {
-        Balance = wallet.Balance,
+   var result = new WalletResponseDto
+{
+    Balance = wallet.Balance,
 
-        Transactions = wallet.Transactions
-            .Select(t => new WalletTransactionDto
-            {
-                Amount = t.Amount,
-                Reason = t.Reason,
-                Type = t.Type.ToString(),
-                CreatedAt = t.CreatedAt
-            })
-            .ToList()
-    };
-
-    return Ok(result);
+    Transactions = wallet.Transactions
+        .OrderByDescending(t => t.CreatedAt)
+        .Take(10)
+        .Select(t => new WalletTransactionDto
+        {
+            Amount = t.Amount,
+            Reason = t.Reason,
+            Type = t.Type.ToString(),
+            CreatedAt = t.CreatedAt
+        })
+        .ToList()
+};
+return Ok(result);
 }
 
 [HttpGet("all")]
@@ -100,25 +101,21 @@ public async Task<IActionResult> GetWalletTransactions(
 }
 
 
-    // GET TRANSACTIONS
-    [HttpGet("transactions")]
-public async Task<IActionResult> GetTransactions()
+[HttpGet("transactions")]
+public async Task<IActionResult> GetTransactions(
+    WalletTransactionType? type,
+    int pageNumber = 1,
+    int pageSize = 10)
 {
     var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
-    var wallet = await _walletService.GetWallet(userId);
+    var result = await _walletService.GetMyTransactions(
+        userId,
+        type,
+        pageNumber,
+        pageSize);
 
-    var transactions = wallet.Transactions
-        .Select(t => new WalletTransactionDto
-        {
-            Amount = t.Amount,
-            Reason = t.Reason,
-            Type = t.Type.ToString(),
-            CreatedAt = t.CreatedAt
-        })
-        .ToList();
-
-    return Ok(transactions);
+    return Ok(result);
 }
 
     // USER REQUEST WITHDRAWAL

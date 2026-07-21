@@ -1,20 +1,21 @@
 using InventoryManagement.Entities;
 using InventoryManagement.DTOs.Wallet;
 using InventoryManagement.DTOs.Withdraw;
+using InventoryManagement.DTOs.Common;
 using InventoryManagement.Enums;
 
 public interface IWalletService
 {
 
     Task<Wallet> GetWallet(int customerId);
-    Task<List<WalletAdminResponseDto>> GetAllWallets(
+    Task<PaginatedResponse<WalletAdminResponseDto>> GetAllWallets(
     string? search = null,
     int pageNumber = 1,
     int pageSize = 10);
 
 Task<WalletAdminResponseDto?> GetWalletById(int walletId);
 
-Task<List<WalletTransactionAdminDto>> GetWalletTransactions(
+Task<PaginatedResponse<WalletTransactionAdminDto>> GetWalletTransactions(
     int walletId,
     WalletTransactionType? type = null,
     int pageNumber = 1,
@@ -25,9 +26,15 @@ Task<List<WalletTransactionAdminDto>> GetWalletTransactions(
     Task RequestWithdrawal(int customerId, WithdrawRequestDto dto);
     Task ApproveWithdrawal(int withdrawalId);
 
-    Task<List<WithdrawalDto>> GetAllWithdrawals(
+    Task<PaginatedResponse<WithdrawalDto>> GetAllWithdrawals(
     string? search = null,
     string? status = null,
+    int pageNumber = 1,
+    int pageSize = 10);
+
+    Task<PaginatedResponse<WalletTransactionDto>> GetMyTransactions(
+    int customerId,
+    WalletTransactionType? type = null,
     int pageNumber = 1,
     int pageSize = 10);
 
