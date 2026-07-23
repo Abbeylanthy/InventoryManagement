@@ -15,5 +15,4 @@ public class ProductDto
     public string? Category { get; set; }
     public int SupplierId { get; set; }
     public string? Supplier { get; set; }
-    public string? ImageUrl { get; set; }
 }

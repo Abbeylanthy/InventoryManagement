@@ -3,6 +3,7 @@
  using InventoryManagement.Data;
  using InventoryManagement.DTOs.User;
  using InventoryManagement.DTOs.Role;
+ using InventoryManagement.DTOs.Permission;
  using InventoryManagement.DTOs;
 using InventoryManagement.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
@@ -123,6 +124,10 @@ if (!user.EmailVerified)
 
 if (!user.IsActive)
     throw new InvalidOperationException("Account is deactivated");
+if (!user.UserRoles.Any(ur => ur.Role.IsActive))
+    throw new InvalidOperationException(
+        "Your assigned role is inactive. Please contact an administrator."
+    );    
 
 var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash!, dto.Password);
 if (result == PasswordVerificationResult.Failed)
@@ -132,18 +137,35 @@ if (result == PasswordVerificationResult.Failed)
 
 return new AuthResponseDto
 {
-    User = new UserDto
-    {
-        Id = user.Id,
-        UserName = user.UserName,
-        Roles = user.UserRoles
-            .Select(ur => new RoleMinDto
-            {
-                Id = ur.Role.Id,
-                Name = ur.Role.Name
-            })
-            .ToList()
-    },
+   User = new UserDetailsDto
+{
+    Id = user.Id,
+    FirstName = user.FirstName,
+    LastName = user.LastName,
+    UserName = user.UserName,
+    Email = user.Email,
+    DateOfBirth = user.DateOfBirth,
+    Gender = user.Gender,
+    IsActive = user.IsActive,
+    EmailVerified = user.EmailVerified,
+
+    Roles = user.UserRoles
+        .Select(ur => new RoleDetailsDto
+        {
+            Id = ur.Role.Id,
+            Name = ur.Role.Name,
+            IsActive = ur.Role.IsActive,
+
+            Permissions = ur.Role.RolePermissions
+                .Select(rp => new PermissionMinDto
+                {
+                    Id = rp.Permission.Id,
+                    Name = rp.Permission.Name
+                })
+                .ToList()
+        })
+        .ToList()
+},
     Token = token
 };
 }

@@ -400,7 +400,7 @@ public async Task HandleSuccessfulPayment(string reference)
     var admins = await _context.Users
     .Include(u => u.UserRoles)
     .ThenInclude(ur => ur.Role)
-    .Where(u => u.UserRoles.Any(ur => ur.Role.Name == "SuperAdmin" || ur.Role.Name == "Admin"))
+    .Where(u => u.UserRoles.Any(ur => ur.Role.Name == "SuperAdmin" || ur.Role.Name == "Staff"))
     .ToListAsync();
 
     foreach (var admin in admins)

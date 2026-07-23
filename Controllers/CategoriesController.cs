@@ -94,4 +94,11 @@ public class CategoriesController : ControllerBase
         var result = await _categoryService.UpdateAsync(id, dto);
         return result == null ? NotFound(new { success = false, message = "Category not found" }) : Ok(new { success = true, data = result });
     }
+
+    [HttpGet("dropdown")]
+public async Task<IActionResult> GetDropdown()
+{
+    var categories = await _categoryService.GetDropdownAsync();
+    return Ok(categories);
+}
 }

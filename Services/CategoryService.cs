@@ -12,6 +12,7 @@ public class CategoryService : ICategoryService
 {
     private readonly IGenericRepository<Category> _repository;
     private readonly IMapper _mapper;
+    
 
     public CategoryService(IGenericRepository<Category> repository, IMapper mapper)
     {
@@ -111,6 +112,15 @@ public async Task<CategoryDto?> UpdateAsync(int id, CategoryUpdateDto dto)
     await _repository.UpdateAsync(category);
     await _repository.SaveChangesAsync();
     return _mapper.Map<CategoryDto>(category);
-
     }
+
+    public async Task<IEnumerable<CategoryDto>> GetDropdownAsync()
+{
+    var categories = await _repository.GetAllAsync();
+
+    return _mapper.Map<IEnumerable<CategoryDto>>(
+        categories.Where(c => c.IsActive)
+                  .OrderBy(c => c.Name)
+    );
+}
 }

@@ -8,11 +8,13 @@ public class DataBaseSeeder
     {
         var permissionNames = new List<string>
         {
+            "ViewCategories",
             "CreateCategory",
             "ToggleCategory",
             "UpdateCategory",
             "DeleteCategory",
 
+            "ViewProducts",
             "CreateProduct",
             "ToggleProduct",
             "UpdateProduct",
@@ -28,6 +30,7 @@ public class DataBaseSeeder
             "GetSupplierById",
             "UpdateSupplier",
             "DeleteSupplier",
+            "View Suppliers",
 
             "CreatePurchaseOrder",
             "ViewPurchaseOrder",
@@ -53,6 +56,9 @@ public class DataBaseSeeder
 
             "GetAllCarts",
             "GetCartById",
+
+            "ViewInventory",
+            "ViewDashboard",
 
         };
 

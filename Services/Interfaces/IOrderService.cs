@@ -2,6 +2,8 @@ using InventoryManagement.Entities;
 using InventoryManagement.Enum;
 using InventoryManagement.DTOs.Order;
 using InventoryManagement.DTOs.Common;
+using InventoryManagement.DTOs.Dashboard;
+using InventoryManagement.DTOs;
 
 namespace InventoryManagement.Services.Interfaces;
 
@@ -15,4 +17,7 @@ public interface IOrderService
     Task CancelOrder(int orderId, int customerId);
     Task AdminCancelOrder (int orderId);
     Task<OrderDashboardSummaryDto> GetDashboardSummary();
+    Task<StaffDashboardSummaryDto> GetStaffDashboardSummary();
+    Task<List<RecentOrderDto>> GetRecentOrders();
+    Task<List<RevenueTrendDto>> GetRevenueTrend();
 }

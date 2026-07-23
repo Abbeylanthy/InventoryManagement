@@ -123,5 +123,31 @@ public async Task<IActionResult> AdminCancelOrder(int orderId)
     return Ok("Order cancelled successfully.");
 }
 
+[HttpGet("staff-dashboard-summary")]
+[HasPermission("GetDashboardSummary")]
+public async Task<IActionResult> GetStaffDashboardSummary()
+{
+    var summary = await _orderService.GetStaffDashboardSummary();
+
+    return Ok(summary);
+}
+
+[HttpGet("recent-orders")]
+[HasPermission("GetDashboardSummary")]
+public async Task<IActionResult> GetRecentOrders()
+{
+    var result = await _orderService.GetRecentOrders();
+
+    return Ok(result);
+}
+
+[HttpGet("revenue-trend")]
+[HasPermission("GetDashboardSummary")]
+public async Task<IActionResult> GetRevenueTrend()
+{
+    var result = await _orderService.GetRevenueTrend();
+
+    return Ok(result);
+}
 
 }

@@ -14,4 +14,5 @@ public interface ICategoryService
     Task<bool> DeleteAsync(int id);    
     Task<CategoryDto?> UpdateAsync(int id, CategoryUpdateDto dto);                
     Task<bool> ToggleActiveAsync(int id, bool isActive); 
+    Task<IEnumerable<CategoryDto>> GetDropdownAsync();
 }

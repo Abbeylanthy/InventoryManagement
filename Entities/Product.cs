@@ -34,7 +34,6 @@ public class Product
     public int SupplierId { get; set; } 
     public int Threshold { get; set; }
     public bool IsActive { get; set; } = true;
-    public string? ImageUrl { get; set; }
     public Supplier Supplier { get; set; } = null!; 
     [JsonIgnore]
     public virtual Category? Category { get; set; }

@@ -5,6 +5,7 @@ using InventoryManagement.Enum;
 using InventoryManagement.Services.Interfaces;
 using InventoryManagement.DTOs.Order; 
 using InventoryManagement.DTOs.Common; 
+using InventoryManagement.DTOs.Dashboard; 
 
 public class OrderService : IOrderService
 {
@@ -466,4 +467,97 @@ public async Task AdminCancelOrder(int orderId)
 
     await CancelOrder(orderId, order.CustomerId);
 }
+
+public async Task<StaffDashboardSummaryDto> GetStaffDashboardSummary()
+{
+    var today = DateTime.UtcNow.Date;
+
+    return new StaffDashboardSummaryDto
+    {
+        TotalProducts = await _context.Products.CountAsync(),
+
+        InStockProducts = await _context.Products
+            .CountAsync(p => p.Quantity > p.Threshold),
+
+        LowStockProducts = await _context.Products
+            .CountAsync(p => p.Quantity <= p.Threshold),
+
+        OutOfStockProducts = await _context.Products
+            .CountAsync(p => p.Quantity == 0),
+
+        PendingPurchaseOrders = await _context.PurchaseOrders
+            .CountAsync(po => po.Status == "Pending"),
+
+        ReceivedPurchaseOrders = await _context.PurchaseOrders
+            .CountAsync(po => po.Status == "Received"),
+
+        TotalOrders = await _context.Orders.CountAsync(),
+
+        PaidOrders = await _context.Orders
+            .CountAsync(o => o.Status == OrderStatus.Paid),
+
+        StockInToday = await _context.StockHistories
+            .CountAsync(s =>
+                s.ActionType == "StockIn" &&
+                s.CreatedAt.Date == today),
+
+        StockOutToday = await _context.StockHistories
+            .CountAsync(s =>
+                s.ActionType == "StockOut" &&
+                s.CreatedAt.Date == today)
+    };
+}
+
+public async Task<List<RecentOrderDto>> GetRecentOrders()
+{
+    return await _context.Orders
+        .Include(o => o.Customer)
+        .OrderByDescending(o => o.CreatedAt)
+        .Take(5)
+        .Select(o => new RecentOrderDto
+        {
+            OrderNumber = o.OrderNumber,
+            CustomerName = o.Customer.FirstName + " " + o.Customer.LastName,
+            TotalAmount = o.TotalAmount,
+            Status = o.Status.ToString(),
+            CreatedAt = o.CreatedAt
+        })
+        .ToListAsync();
+}
+
+public async Task<List<RevenueTrendDto>> GetRevenueTrend()
+{
+    var startDate = DateTime.UtcNow.Date.AddDays(-6);
+
+    var revenue = await _context.Payments
+        .Where(p =>
+            p.Status == "Success" &&
+            p.PaidAt != null &&
+            p.PaidAt.Value.Date >= startDate)
+        .GroupBy(p => p.PaidAt!.Value.Date)
+        .Select(g => new
+        {
+            Date = g.Key,
+            Revenue = g.Sum(x => x.Amount)
+        })
+        .ToListAsync();
+
+    var result = Enumerable.Range(0, 7)
+        .Select(i =>
+        {
+            var day = startDate.AddDays(i);
+
+            var item = revenue.FirstOrDefault(x => x.Date == day);
+
+            return new RevenueTrendDto
+            {
+                Day = day.ToString("ddd"),
+                Revenue = item?.Revenue ?? 0
+            };
+        })
+        .ToList();
+
+    return result;
+}
+
 }

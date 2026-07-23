@@ -209,6 +209,8 @@ namespace InventoryManagement.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("UserId");
+
                     b.ToTable("Notifications");
                 });
 
@@ -839,6 +841,17 @@ namespace InventoryManagement.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("InventoryManagement.Entities.Notification", b =>
+                {
+                    b.HasOne("InventoryManagement.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("InventoryManagement.Entities.Order", b =>
                 {
                     b.HasOne("InventoryManagement.Entities.User", "Customer")
@@ -933,7 +946,7 @@ namespace InventoryManagement.Migrations
             modelBuilder.Entity("InventoryManagement.Entities.PurchaseOrderItem", b =>
                 {
                     b.HasOne("InventoryManagement.Entities.Product", "Product")
-                        .WithMany()
+                        .WithMany("PurchaseOrderItems")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1055,6 +1068,11 @@ namespace InventoryManagement.Migrations
             modelBuilder.Entity("InventoryManagement.Entities.Permission", b =>
                 {
                     b.Navigation("RolePermissions");
+                });
+
+            modelBuilder.Entity("InventoryManagement.Entities.Product", b =>
+                {
+                    b.Navigation("PurchaseOrderItems");
                 });
 
             modelBuilder.Entity("InventoryManagement.Entities.PurchaseOrder", b =>

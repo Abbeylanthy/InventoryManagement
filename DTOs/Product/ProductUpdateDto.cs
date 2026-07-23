@@ -29,6 +29,4 @@ public class ProductUpdateDto
 
     public int Threshold { get; set; }
 
-    public string? ImageUrl { get; set; }
-
 }

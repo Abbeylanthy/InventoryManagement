@@ -49,6 +49,9 @@ public class ProductService : IProductService
         SKU = p.SKU,
         CategoryId = (int)p.CategoryId,
         Category = p.Category!.Name,
+        SupplierId = p.SupplierId,
+        Threshold = p.Threshold,
+        IsActive = p.IsActive
             
     })
     .FirstOrDefaultAsync();
@@ -152,6 +155,7 @@ else
     {
         var product = await _context.Products
             .Include(p => p.Category)
+            .Include(p => p.Supplier)
             .FirstOrDefaultAsync(p => p.Id == id);
 
         if (product == null)

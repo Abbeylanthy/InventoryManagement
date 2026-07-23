@@ -6,10 +6,7 @@ using InventoryManagement.DTOs.User;
 using InventoryManagement.DTOs.Permission;
 
 namespace InventoryManagement.Common.Mappings;
-
-/// <summary>
 /// AutoMapper Profile - This class defines how to map between Entities and DTOs
-/// </summary>
 public class MappingProfile : Profile
 {
     public MappingProfile()
@@ -34,13 +31,13 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.IsActive, opt => opt.Ignore());
 
         // Map Product → ProductDto (for responses)
-       CreateMap<Product, ProductDto>()
+      CreateMap<Product, ProductDto>()
     .ForMember(dest => dest.Category,
         opt => opt.MapFrom(src => src.Category!.Name))
     .ForMember(dest => dest.Supplier,
         opt => opt.MapFrom(src => src.Supplier!.Name))
     .ForMember(dest => dest.SupplierId,
-        opt => opt.MapFrom(src => src.SupplierId)); // Include basic category info
+        opt => opt.MapFrom(src => src.SupplierId));// Include basic category info
 // Map UserCreateDto → User (for creating)
           CreateMap<User, UserDto>()
     .ForMember(dest => dest.Roles,

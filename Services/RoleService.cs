@@ -148,12 +148,34 @@ return new PaginatedResponse<RoleDto>
         return true;
     }
 
-   public async Task<bool> ToggleRoleStatusAsync(int id)
+ public async Task<bool> ToggleRoleStatusAsync(int id)
 {
     var role = await _context.Roles.FindAsync(id);
 
     if (role == null)
         return false;
+
+    // Prevent deactivating Super Admin
+    if (role.IsActive && role.Name == "SuperAdmin")
+    {
+        throw new InvalidOperationException(
+            "The Super Admin role cannot be deactivated."
+        );
+    }
+
+    // Prevent deactivating roles assigned to users
+    if (role.IsActive)
+    {
+        var assignedToUsers = await _context.UserRoles
+            .AnyAsync(ur => ur.RoleId == id);
+
+        if (assignedToUsers)
+        {
+            throw new InvalidOperationException(
+                "This role is assigned to one or more users and cannot be deactivated."
+            );
+        }
+    }
 
     role.IsActive = !role.IsActive;
 

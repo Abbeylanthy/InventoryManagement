@@ -27,5 +27,4 @@ public class ProductCreateDto
     public int CategoryId { get; set; }
     public int SupplierId { get; set; }
     public int Threshold { get; set; }
-    public string? ImageUrl { get; set; }
 }
