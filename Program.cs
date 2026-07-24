@@ -16,13 +16,7 @@ using Microsoft.AspNetCore.Authorization;
 using InventoryManagement.Authorization;
 using InventoryManagement.Data.Seed;
 
-
-
 var builder = WebApplication.CreateBuilder(args);
-
-// ===============================================
-// Register Services
-// ===============================================
 
 // Controllers
 builder.Services.AddControllers()
@@ -91,7 +85,15 @@ builder.Services.AddSwaggerGen(option =>
 
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlOptions =>
+        {
+            sqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(30),
+                errorNumbersToAdd: null);
+        }));
     builder.Services.AddHttpContextAccessor();
 
     builder.Services.Configure<PaystackSettings>(
@@ -108,6 +110,7 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<DataBaseSeeder>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IOtpService, OtpService>();
@@ -137,11 +140,12 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider
-        .GetRequiredService<AppDbContext>();
+    var services = scope.ServiceProvider;
 
-    await InventoryManagement.Data.Seed.DataBaseSeeder
-        .SeedAsync(context);
+    var context = services.GetRequiredService<AppDbContext>();
+    var seeder = services.GetRequiredService<DataBaseSeeder>();
+
+    await seeder.SeedAsync(context);
 }
 
 // Swagger (Development only)

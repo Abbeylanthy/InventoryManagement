@@ -37,10 +37,7 @@ public class AppDbContext : DbContext
     public DbSet<Feedback> Feedbacks { get; set; } = null!;
     public DbSet<RolePermission> RolePermissions { get; set; } = null!;
 
-    /// <summary>
     /// This method is called when EF Core is building the database model.
-    /// We use it to configure relationships between tables and global rules.
-    /// </summary>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -59,6 +56,17 @@ public class AppDbContext : DbContext
         .WithMany(r => r.UserRoles)
         .HasForeignKey(ur => ur.RoleId);
 
+    modelBuilder.Entity<PurchaseOrderItem>()
+    .HasOne(poi => poi.PurchaseOrder)
+    .WithMany(po => po.Items)
+    .HasForeignKey(poi => poi.PurchaseOrderId)
+    .OnDelete(DeleteBehavior.Restrict);
+    
+    modelBuilder.Entity<PurchaseOrderItem>()
+    .HasOne(oi => oi.Product)
+    .WithMany(p => p.PurchaseOrderItems)
+    .HasForeignKey(oi => oi.ProductId)
+    .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Product>().ToTable("Products");
         modelBuilder.Entity<Category>().ToTable("Categories");
