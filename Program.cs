@@ -57,7 +57,8 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(
                 "http://localhost:3000",
                 "http://localhost:5173",
-                "http://localhost:4200")
+                "http://localhost:4200",
+                "https://blue-meadow-0aeb4c410.7.azurestaticapps.net")
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
