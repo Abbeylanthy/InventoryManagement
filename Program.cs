@@ -149,11 +149,9 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Swagger (Development only)
-if (app.Environment.IsDevelopment())
-{
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+
 
 app.UseHttpsRedirection();
 app.UseMiddleware<GlobalExceptionMiddleware>();
