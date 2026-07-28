@@ -480,7 +480,7 @@ public async Task<StaffDashboardSummaryDto> GetStaffDashboardSummary()
             .CountAsync(p => p.Quantity > p.Threshold),
 
         LowStockProducts = await _context.Products
-            .CountAsync(p => p.Quantity <= p.Threshold),
+            .CountAsync(p => p.Quantity > 0 && p.Quantity <= p.Threshold),
 
         OutOfStockProducts = await _context.Products
             .CountAsync(p => p.Quantity == 0),
