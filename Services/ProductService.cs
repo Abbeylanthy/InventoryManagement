@@ -76,7 +76,8 @@ bool isAdmin =
     user != null &&
     (
         user.IsInRole("SuperAdmin") ||
-        user.IsInRole("Admin")
+        user.IsInRole("Admin") ||
+        user.IsInRole("Staff")
     );
 
     // Search
