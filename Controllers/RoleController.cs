@@ -57,17 +57,7 @@ public async Task<IActionResult> GetRoleById(int id)
 
     return Ok(role);
 }
-[Authorize(Roles = "SuperAdmin")]
-[HttpGet("name/{name}")]
-public async Task<IActionResult> GetRoleByName(string name)
-{
-    var role = await _roleService.GetRoleByNameAsync(name);
 
-    if (role == null)
-        return NotFound();
-
-    return Ok(role);
-}
 [Authorize(Roles = "SuperAdmin")]
 [HttpPut("{id}")]
 public async Task<IActionResult> UpdateRole(int id, [FromBody] CreateRoleDto dto)
