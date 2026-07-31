@@ -49,6 +49,28 @@ public async Task<IActionResult> Register(RegisterDto dto)
     }
 }
 
+[HttpPost("verify-otp")]
+    public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto dto)
+    {
+        var result = await _otpService.VerifyOtpAsync(dto.Email, dto.Otp);
+        if (!result)
+        {
+            return BadRequest("Invalid or expired OTP.");
+        }
+        return Ok("Email verified successfully.");
+    }
+
+     [HttpPost("resend-otp")]
+    public async Task<IActionResult> ResendOtp([FromBody] ResendOtpDto dto)
+    {
+        var result = await _otpService.ResendOtpAsync(dto.Email); 
+        if (!result)
+        {
+            return BadRequest("Unable to resend OTP. User may already be verified");
+        }
+        return Ok("OTP resent successfully.");
+    }
+
         // POST: api/auth/login
        [HttpPost("login")]
 public async Task<IActionResult> Login(UserLoginDto dto)
@@ -115,24 +137,6 @@ public async Task<IActionResult> ChangePassword(ChangePasswordDto dto)
         return BadRequest(new { message = ex.Message });
     }
 }
-[HttpPost("verify-otp")]
-    public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto dto)
-    {
-        var result = await _otpService.VerifyOtpAsync(dto.Email, dto.Otp);
-        if (!result)
-        {
-            return BadRequest("Invalid or expired OTP.");
-        }
-        return Ok("Email verified successfully.");
-    }
-    [HttpPost("resend-otp")]
-    public async Task<IActionResult> ResendOtp([FromBody] ResendOtpDto dto)
-    {
-        var result = await _otpService.ResendOtpAsync(dto.Email); 
-        if (!result)
-        {
-            return BadRequest("Unable to resend OTP. User may already be verified");
-        }
-        return Ok("OTP resent successfully.");
-    }
+
+   
 }

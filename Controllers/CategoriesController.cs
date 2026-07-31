@@ -61,6 +61,25 @@ public class CategoriesController : ControllerBase
         return category == null ? NotFound() : Ok(category);
     }
 
+    [HttpPut("{id}")]
+    [HasPermission("UpdateCategory")]
+    public async Task<IActionResult> Update(int id, [FromBody] CategoryUpdateDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(new { success = false, message = "Validation failed", errors = ModelState });
+
+        var result = await _categoryService.UpdateAsync(id, dto);
+        return result == null ? NotFound(new { success = false, message = "Category not found" }) : Ok(new { success = true, data = result });
+    }
+
+    [HttpPatch("{id}/toggle-active")]
+    [HasPermission("ToggleCategory")]
+    public async Task<IActionResult> ToggleActive(int id, [FromQuery] bool isActive)
+    {
+        var success = await _categoryService.ToggleActiveAsync(id, isActive);
+        return success ? Ok() : NotFound();
+    }
+
     [HttpDelete("{id}")]
     [HasPermission("DeleteCategory")]
     public async Task<IActionResult> Delete(int id)
@@ -74,25 +93,6 @@ public class CategoriesController : ControllerBase
         {
             return BadRequest(new { success = false, message = ex.Message });
         }
-    }
-
-    [HttpPatch("{id}/toggle-active")]
-    [HasPermission("ToggleCategory")]
-    public async Task<IActionResult> ToggleActive(int id, [FromQuery] bool isActive)
-    {
-        var success = await _categoryService.ToggleActiveAsync(id, isActive);
-        return success ? Ok() : NotFound();
-    }
-    
-    [HttpPut("{id}")]
-    [HasPermission("UpdateCategory")]
-    public async Task<IActionResult> Update(int id, [FromBody] CategoryUpdateDto dto)
-    {
-        if (!ModelState.IsValid)
-            return BadRequest(new { success = false, message = "Validation failed", errors = ModelState });
-
-        var result = await _categoryService.UpdateAsync(id, dto);
-        return result == null ? NotFound(new { success = false, message = "Category not found" }) : Ok(new { success = true, data = result });
     }
 
     [HttpGet("dropdown")]

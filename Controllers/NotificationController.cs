@@ -69,14 +69,7 @@ public async Task<IActionResult> GetNotificationById(int id)
     return Ok(notification);
 }
 
-    [HttpPut("read/{id}")]
-    public async Task<IActionResult> MarkAsRead(int id)
-    {
-        await _notificationService.MarkAsRead(id);
-        return Ok("Marked as read");
-    }
-
-    [HttpGet("unread-count")]
+   [HttpGet("unread-count")]
 public async Task<IActionResult> GetUnreadCount()
 {
     var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -85,6 +78,13 @@ public async Task<IActionResult> GetUnreadCount()
 
     return Ok(new { count });
 }
+
+    [HttpPut("read/{id}")]
+    public async Task<IActionResult> MarkAsRead(int id)
+    {
+        await _notificationService.MarkAsRead(id);
+        return Ok("Marked as read");
+    }
 
 [HttpPut("read-all")]
 public async Task<IActionResult> MarkAllAsRead()
